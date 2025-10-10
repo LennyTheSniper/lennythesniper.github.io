@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sign Up — Pokémon Stat Viewer</title>
+  <link rel="icon" type="image/x-icon" href="./images/favicon.ico">
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+  <header style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+    <h2 style="margin:0;">Pokémon Stat Viewer</h2>
+  </header>
+
+  <main style="max-width:520px; margin:36px auto;">
+    <h3>Create account</h3>
+    <form id="signup-form">
+      <div style="margin-bottom:8px;">
+        <label for="username">Username</label><br>
+        <input id="username" name="username" type="text" required>
+      </div>
+      <div style="margin-bottom:8px;">
+        <label for="password">Password</label><br>
+        <input id="password" name="password" type="password" required>
+      </div>
+      <button type="submit" style="padding:8px 12px">Sign up</button>
+      <button id="to-login" type="button" style="padding:8px 12px; margin-left:8px">Already have an account?</button>
+    </form>
+
+    <div id="signup-status" style="margin-top:12px;color:var(--muted)"></div>
+  </main>
+
+  <script src="./js/auth.js"></script>
+  <script>
+    const form = document.getElementById('signup-form');
+    const status = document.getElementById('signup-status');
+    document.getElementById('to-login').addEventListener('click', ()=>{ location.href = './login.html'; });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      status.textContent = 'Creating account...';
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      try {
+        await authClient.signup(username, password);
+        status.textContent = 'Account created. Redirecting to login...';
+        setTimeout(()=>{ location.href = './login.html'; }, 900);
+      } catch (err) {
+        status.textContent = err.message || 'Signup failed';
+      }
+    });
+  </script>
+</body>
+</html>
