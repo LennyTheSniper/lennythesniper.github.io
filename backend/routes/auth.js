@@ -58,4 +58,19 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// Token verification route
+router.get('/profile', (req, res) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'Token missing' });
+
+  jwt.verify(token, SECRET_KEY, (err, user) => {
+    if (err) {
+      console.error('Token verification failed:', err.message);
+      return res.status(403).json({ error: 'Invalid token' });
+    }
+    res.json({ user }); // you can customize this (e.g. just send user.username)
+  });
+});
+
 module.exports = router;

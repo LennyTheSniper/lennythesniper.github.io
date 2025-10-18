@@ -64,7 +64,9 @@
       return;
     }
     // validate token with backend
-    const res = await fetch('/api/auth/profile', { headers: { 'Authorization': 'Bearer ' + token }});
+    const res = await fetch(API_BASE + '/auth/profile', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
     if (!res.ok) {
       authClient.removeToken();
       window.location.href = './login.html';
@@ -77,8 +79,8 @@
 
   <script>
   // JavaScript port of PokeStat.py behaviour
-  const API_BASE = 'https://pokeapi.co/api/v2';
-  const LIST_ENDPOINT = API_BASE + '/pokemon?limit=1025';
+  const POKE_API_BASE = 'https://pokeapi.co/api/v2';
+  const LIST_ENDPOINT = POKE_API_BASE + '/pokemon?limit=1025';
 
   const STAT_KEYS = ["hp","attack","defense","special-attack","special-defense","speed"];
   const STAT_LABELS = ["HP","Atk","Def","SpA","SpD","Spe"];
@@ -95,7 +97,7 @@
 
   const TYPE_ICON_GITHUB_TEMPLATE = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/types/generation-ix/scarlet-violet/{id}.png';
   const TYPE_ICON_LEGACY_BY_NAME = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/types/{type_name}.png';
-  const TYPE_API_ENDPOINT = API_BASE + '/type/{type_name}';
+  const TYPE_POKE_API_ENDPOINT = POKE_API_BASE + '/type/{type_name}';
   const TYPE_ID_CACHE = {};
 
   // helpers: color conversions and lerp
@@ -147,13 +149,13 @@
   }
 
   async function fetchSpecies(nameOrUrl){
-    let url = nameOrUrl.startsWith('http') ? nameOrUrl : `${API_BASE}/pokemon-species/${nameOrUrl}`;
+    let url = nameOrUrl.startsWith('http') ? nameOrUrl : `${POKE_API_BASE}/pokemon-species/${nameOrUrl}`;
     let r = await fetch(url);
     if (r.status === 404) {
       // fallback to /pokemon/<name>
-      const alt = await fetchJson(`${API_BASE}/pokemon/${nameOrUrl}`);
+      const alt = await fetchJson(`${POKE_API_BASE}/pokemon/${nameOrUrl}`);
       const species_name = alt.species.name;
-      url = `${API_BASE}/pokemon-species/${species_name}`;
+      url = `${POKE_API_BASE}/pokemon-species/${species_name}`;
       r = await fetch(url);
     }
     if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
@@ -161,7 +163,7 @@
   }
 
   async function fetchPokemonByName(name){
-    return await fetchJson(`${API_BASE}/pokemon/${name}`);
+    return await fetchJson(`${POKE_API_BASE}/pokemon/${name}`);
   }
 
   async function fetchTypeId(typeName){
@@ -169,7 +171,7 @@
     const key = typeName.trim().toLowerCase();
     if (TYPE_ID_CACHE[key]) return TYPE_ID_CACHE[key];
     try{
-      const url = TYPE_API_ENDPOINT.replace('{type_name}', key);
+      const url = TYPE_POKE_API_ENDPOINT.replace('{type_name}', key);
       const data = await fetchJson(url);
       const tid = data.id;
       if (Number.isInteger(tid)) { TYPE_ID_CACHE[key] = tid; return tid; }

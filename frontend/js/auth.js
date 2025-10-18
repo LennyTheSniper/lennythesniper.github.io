@@ -2,15 +2,15 @@
 // Simple auth helper client for your backend
 // NOTE: this stores token in localStorage (easy for dev). For production, consider httpOnly cookies.
 
-// Use a *different* name to avoid colliding with other global vars like the main page's API_BASE.
-const AUTH_API_BASE = ''; // empty => same origin (useful when serving frontend from backend)
+// Make available globally for all pages
+window.API_BASE = "http://192.168.1.28:3000/api";
 
 // Wrap in an IIFE so we only expose window.authClient
 (function () {
   const _tokenKey = 'ptv_token';
 
   async function signup(username, password) {
-    const res = await fetch(AUTH_API_BASE + '/api/auth/signup', {
+    const res = await fetch(API_BASE + '/auth/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
@@ -21,7 +21,7 @@ const AUTH_API_BASE = ''; // empty => same origin (useful when serving frontend 
   }
 
   async function login(username, password) {
-    const res = await fetch(AUTH_API_BASE + '/api/auth/login', {
+    const res = await fetch(API_BASE + '/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
@@ -39,7 +39,7 @@ const AUTH_API_BASE = ''; // empty => same origin (useful when serving frontend 
     const headers = opts.headers ? { ...opts.headers } : {};
     const token = getToken();
     if (token) headers['Authorization'] = 'Bearer ' + token;
-    const res = await fetch(AUTH_API_BASE + path, { ...opts, headers });
+    const res = await fetch(API_BASE + path, { ...opts, headers });
     return res;
   }
 
