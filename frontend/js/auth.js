@@ -3,7 +3,7 @@
 // NOTE: this stores token in localStorage (easy for dev). For production, consider httpOnly cookies.
 
 // Make available globally for all pages
-window.API_BASE = "http://192.168.1.28:3000/api";
+window.API_BASE = "/api";
 
 // Wrap in an IIFE so we only expose window.authClient
 (function () {
