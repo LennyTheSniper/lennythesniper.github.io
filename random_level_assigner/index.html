@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Super Mario Maker 2 Random Theme Assigner</title>
+
+  <style>
+    :root {
+      --bg: #111827;
+      --panel: #1f2937;
+      --panel-2: #0f172a;
+      --text: #f9fafb;
+      --muted: #9ca3af;
+      --line: rgba(255,255,255,0.08);
+      --accent: #60a5fa;
+      --good: #34d399;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: radial-gradient(circle at top, #1f2937, var(--bg) 62%);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 24px;
+    }
+
+    .card {
+      background: rgba(31, 41, 55, 0.96);
+      padding: 32px;
+      border-radius: 18px;
+      max-width: 860px;
+      width: 100%;
+      box-shadow: 0 18px 48px rgba(0,0,0,0.45);
+      border: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: 30px;
+      line-height: 1.1;
+    }
+
+    .subtitle {
+      margin: 0 0 24px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .controls input {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      color: var(--text);
+      font-size: 16px;
+      outline: none;
+    }
+
+    .controls input:focus {
+      border-color: rgba(96, 165, 250, 0.8);
+      box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+    }
+
+    .controls button {
+      padding: 14px 18px;
+      border: 0;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #60a5fa, #3b82f6);
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.08s ease, filter 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .controls button:hover {
+      filter: brightness(1.05);
+    }
+
+    .controls button:active {
+      transform: translateY(1px);
+    }
+
+    .output {
+      background: rgba(17, 24, 39, 0.72);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .seed-line {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 14px;
+    }
+
+    .big-result {
+      font-size: 26px;
+      line-height: 1.35;
+      margin: 0 0 18px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .item {
+      background: rgba(31, 41, 55, 0.9);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 16px;
+      min-height: 100%;
+    }
+
+    .label {
+      color: var(--muted);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .value {
+      font-size: 18px;
+      line-height: 1.45;
+    }
+
+    .value strong {
+      color: #fff;
+    }
+
+    .description {
+      margin-top: 8px;
+      color: #d1d5db;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .note {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(96, 165, 250, 0.12);
+      border: 1px solid rgba(96, 165, 250, 0.25);
+      color: #dbeafe;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 720px) {
+      .controls,
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .card {
+        padding: 22px;
+      }
+
+      h1 {
+        font-size: 26px;
+      }
+
+      .big-result {
+        font-size: 22px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Super Mario Maker 2 Theme Assigner</h1>
+    <p class="subtitle">
+      Enter a participant name, bracket number, or seed code. The same input will always produce the same assignment.
+    </p>
+
+    <div class="controls">
+      <input
+        id="seedInput"
+        type="text"
+        placeholder="Participant name or ID, for example: Alex-07"
+        autocomplete="off"
+      />
+      <button id="generateBtn" type="button">Generate assignment</button>
+    </div>
+
+    <div class="output" id="output">
+      <div class="seed-line" id="seedLine">No assignment generated yet.</div>
+      <div class="big-result" id="headline">Enter a seed and click Generate.</div>
+      <div class="grid" id="details"></div>
+      <div class="note" id="note">
+        Theme-gated picks are filtered so invalid combinations do not appear.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ------------------------------------------------------------
+    // CONSTANTS
+    // ------------------------------------------------------------
+
+    const THEMES = ["SMB", "SMB3", "SMW", "NSMBU", "SM3DW"];
+
+    const STYLES = [
+      {
+        name: "Kaizo",
+        weight: 3,
+        description: "Tight setups, tricky execution, and deliberate punishment."
+      },
+      {
+        name: "Speedrun",
+        weight: 3,
+        description: "Fast routes, momentum, and time pressure from start to finish."
+      },
+      {
+        name: "Precision",
+        weight: 2,
+        description: "Careful movement, exact jumps, and narrow execution windows."
+      },
+      {
+        name: "Red Coin",
+        weight: 2,
+        description: "Collect every red coin and build the course around that objective."
+      },
+      {
+        name: "Freeform",
+        weight: 1,
+        description: "Open-ended design with fewer structural restrictions."
+      }
+    ];
+
+    const CLEAR_CONDITIONS = [
+      "Reach the goal without taking damage.",
+      "Do not use a power-up.",
+      "Do not jump.",
+      "Do not stop moving for more than 2 seconds.",
+      "Collect every coin.",
+      "Do not kill any enemies."
+    ];
+
+    // Each item has theme availability so invalid combinations never appear.
+    const OBJECTS = [
+      { name: "Conveyor Belts", description: "Force movement and create timing-based setups.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
+      { name: "Yoshi", description: "Build the course around riding, mobility, and damage control.", themes: ["SMW", "NSMBU"] },
+      { name: "Clear Pipes", description: "Create route planning, alternate paths, and visual flow.", themes: ["SM3DW"] },
+      { name: "On/Off Switches", description: "Flip the whole level state and force route decisions.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
+      { name: "Snake Blocks", description: "Guide the player through moving paths and confined spaces.", themes: ["SM3DW"] },
+      { name: "Icicles", description: "Add falling hazard pressure and vertical danger.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
+      { name: "Tracks", description: "Drive moving platforms or hazards through the stage.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
+      { name: "P-Switches", description: "Turn the level into a timed coin or hazard puzzle.", themes: THEMES },
+      { name: "Lifts", description: "Create layered movement and vertical routing.", themes: THEMES },
+      { name: "Thwomps", description: "Punish hesitation with sudden impact timing.", themes: THEMES },
+      { name: "Burners", description: "Add short hazard windows that demand rhythm.", themes: THEMES },
+      { name: "One-Way Walls", description: "Limit backtracking and force committed routes.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
+      { name: "Blinking Blocks", description: "Create oscillating platforming and visual timing tests.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
+      { name: "Lava Lifts", description: "Mix moving platforms with rising danger.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
+      { name: "Warp Pipes", description: "Support shortcuts, branching routes, or hidden progression.", themes: THEMES }
+    ];
+
+    const ENEMIES = [
+      { name: "Goombas", description: "Simple pressure and movement blockers.", themes: THEMES },
+      { name: "Koopas", description: "Shell interactions and classic patrol pressure.", themes: THEMES },
+      { name: "Piranha Plants", description: "Reliable lane control and timing hazards.", themes: THEMES },
+      { name: "Buzzy Beetles", description: "Low-profile enemies that change jump behavior.", themes: THEMES },
+      { name: "Dry Bones", description: "Persistent pressure that resets after being hit.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
+      { name: "Wigglers", description: "Calm movement until they are disturbed.", themes: ["SMW", "NSMBU", "SM3DW"] },
+      { name: "Hammer Bros.", description: "Projectile pressure and movement disruption.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
+      { name: "Magikoopas", description: "Spell-based threat that changes the battlefield.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
+      { name: "Fire Bros.", description: "Projectile-heavy enemy pressure for route control.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
+      { name: "Chain Chomps", description: "Strong area denial and path control.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
+      { name: "Pokeys", description: "Tall, segmented enemies that reshape jumps.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
+      { name: "Para-Biddybuds", description: "Floating pressure and awkward spacing.", themes: ["SM3DW"] },
+      { name: "Spikes", description: "Projectile tension and target prioritization.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
+      { name: "Boo Buddies", description: "Ghost pressure in enclosed or looping spaces.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
+      { name: "Bob-ombs", description: "Explosive threat that can reshape the route.", themes: THEMES }
+    ];
+
+    // ------------------------------------------------------------
+    // HASH + SEEDED RNG
+    // ------------------------------------------------------------
+
+    function hashString(str) {
+      let hash = 2166136261;
+      for (let i = 0; i < str.length; i++) {
+        hash ^= str.charCodeAt(i);
+        hash = Math.imul(hash, 16777619);
+      }
+      return hash >>> 0;
+    }
+
+    function mulberry32(seed) {
+      return function () {
+        let t = seed += 0x6D2B79F5;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    // ------------------------------------------------------------
+    // RANDOM HELPERS
+    // ------------------------------------------------------------
+
+    function pick(list, rng) {
+      return list[Math.floor(rng() * list.length)];
+    }
+
+    function pickWeighted(list, rng) {
+      const total = list.reduce((sum, item) => sum + item.weight, 0);
+      let roll = rng() * total;
+
+      for (const item of list) {
+        roll -= item.weight;
+        if (roll < 0) return item;
+      }
+
+      return list[list.length - 1];
+    }
+
+    function pickFromThemePool(list, theme, rng) {
+      const filtered = list.filter(item => item.themes.includes(theme));
+      const pool = filtered.length ? filtered : list;
+      return pick(pool, rng);
+    }
+
+    function maybeClearCondition(styleName, rng) {
+      const chance = styleName === "Speedrun" ? 1 / 3 : 1 / 2;
+      return rng() < chance ? pick(CLEAR_CONDITIONS, rng) : null;
+    }
+
+    function formatStyleDetail(style, rng) {
+      if (style.name === "Speedrun") {
+        const seconds = 30 + Math.floor(rng() * 4) * 10; // 30, 40, 50, 60
+        return {
+          label: "Target Time",
+          value: `${seconds} seconds`
+        };
+      }
+
+      if (style.name === "Red Coin") {
+        const redCoins = 3 + Math.floor(rng() * 7); // 3 through 9
+        return {
+          label: "Red Coins",
+          value: `${redCoins} red coin${redCoins === 1 ? "" : "s"}`
+        };
+      }
+
+      const checkpoints = Math.floor(rng() * 3); // 0, 1, 2
+      return {
+        label: "Checkpoints",
+        value: `${checkpoints}`
+      };
+    }
+
+    // ------------------------------------------------------------
+    // GENERATION
+    // ------------------------------------------------------------
+
+    function generateAssignment() {
+      const seedInput = document.getElementById("seedInput");
+      const seedValue = seedInput.value.trim();
+
+      if (!seedValue) {
+        document.getElementById("seedLine").textContent = "Enter a participant name, number, or code first.";
+        document.getElementById("headline").textContent = "No assignment generated yet.";
+        document.getElementById("details").innerHTML = "";
+        return;
+      }
+
+      const seed = hashString(seedValue.toLowerCase());
+      const rng = mulberry32(seed);
+
+      const theme = pick(THEMES, rng);
+      const style = pickWeighted(STYLES, rng);
+      const styleDetail = formatStyleDetail(style, rng);
+
+      let clearCondition = null;
+      if (style.name === "Speedrun") {
+        clearCondition = maybeClearCondition(style.name, rng);
+      } else if (style.name !== "Speedrun") {
+        // Only styles with 0 checkpoints can ask for a clear condition.
+        const checkpoints = styleDetail.label === "Checkpoints" ? parseInt(styleDetail.value, 10) : null;
+        if (checkpoints === 0) {
+          clearCondition = maybeClearCondition(style.name, rng);
+        }
+      }
+
+      // Need to know checkpoints before deciding clear condition.
+      // Recompute once in a clean branch so the rule is exact and easy to follow.
+      let detailLabel = styleDetail.label;
+      let detailValue = styleDetail.value;
+      if (style.name !== "Speedrun" && style.name !== "Red Coin") {
+        const checkpoints = parseInt(detailValue, 10);
+        clearCondition = checkpoints === 0 ? maybeClearCondition(style.name, rng) : null;
+      } else if (style.name === "Speedrun") {
+        clearCondition = maybeClearCondition(style.name, rng);
+      }
+
+      const mainObject = pickFromThemePool(OBJECTS, theme, rng);
+      const mainEnemy = pickFromThemePool(ENEMIES, theme, rng);
+
+      const details = [
+        {
+          label: "Level Theme",
+          value: theme,
+          description: "The game style the course must use."
+        },
+        {
+          label: "Level Style",
+          value: style.name,
+          description: style.description
+        },
+        {
+          label: detailLabel,
+          value: detailValue,
+          description:
+            style.name === "Speedrun"
+              ? "Use a time target instead of checkpoints."
+              : style.name === "Red Coin"
+                ? "Use a red coin objective instead of checkpoints."
+                : "Regular checkpoint count for this course."
+        },
+        {
+          label: "Clear Condition",
+          value: clearCondition ? clearCondition : "Not required",
+          description:
+            clearCondition
+              ? "This course should explicitly include a clear condition."
+              : "No extra clear condition required."
+        },
+        {
+          label: "Main Object",
+          value: mainObject.name,
+          description: mainObject.description
+        },
+        {
+          label: "Main Enemy",
+          value: mainEnemy.name,
+          description: mainEnemy.description
+        }
+      ];
+
+      document.getElementById("seedLine").textContent = `Seed used: ${seedValue}`;
+      document.getElementById("headline").innerHTML =
+        `Assigned course: <strong>${theme}</strong> <strong>${style.name}</strong>`;
+
+      document.getElementById("details").innerHTML = details.map(item => `
+        <div class="item">
+          <div class="label">${item.label}</div>
+          <div class="value"><strong>${item.value}</strong></div>
+          <div class="description">${item.description}</div>
+        </div>
+      `).join("");
+    }
+
+    // ------------------------------------------------------------
+    // EVENTS
+    // ------------------------------------------------------------
+
+    document.getElementById("generateBtn").addEventListener("click", generateAssignment);
+
+    document.getElementById("seedInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        generateAssignment();
+      }
+    });
+  </script>
+</body>
+</html>
