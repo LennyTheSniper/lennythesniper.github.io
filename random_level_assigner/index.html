@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Super Mario Maker 2 Random Theme Assigner</title>
+  <title>SMM2 Random Theme Assigner</title>
 
   <style>
     :root {
@@ -205,16 +205,16 @@
 </head>
 <body>
   <div class="card">
-    <h1>Super Mario Maker 2 Theme Assigner</h1>
+    <h1>SMM2 Theme Assigner</h1>
     <p class="subtitle">
-      Enter a participant name, bracket number, or seed code. The same input will always produce the same assignment.
+      Enter your username to get your randomized theme assignment.
     </p>
 
     <div class="controls">
       <input
         id="seedInput"
         type="text"
-        placeholder="Participant name or ID, for example: Alex-07"
+        placeholder="Your username"
         autocomplete="off"
       />
       <button id="generateBtn" type="button">Generate assignment</button>
@@ -225,7 +225,7 @@
       <div class="big-result" id="headline">Enter a seed and click Generate.</div>
       <div class="grid" id="details"></div>
       <div class="note" id="note">
-        Theme-gated picks are filtered so invalid combinations do not appear.
+        Theme-gated picks are filtered so invalid combinations do not appear. If your theme has an impossible combination, contact LennyTheSniper on Twitter or Discord to get it fixed!<br><br>
       </div>
     </div>
   </div>
@@ -239,76 +239,125 @@
 
     const STYLES = [
       {
-        name: "Kaizo",
+        name: "Kaizo/Platforming",
         weight: 3,
-        description: "Tight setups, tricky execution, and deliberate punishment."
+        description: "As long as the platforming or doing tricks is the focus."
       },
       {
         name: "Speedrun",
         weight: 3,
-        description: "Fast routes, momentum, and time pressure from start to finish."
+        description: "Tick, tock, tick, tock..."
       },
       {
         name: "Precision",
         weight: 2,
-        description: "Careful movement, exact jumps, and narrow execution windows."
+        description: "Tight jumps done at your own pace."
       },
       {
         name: "Red Coin",
         weight: 2,
-        description: "Collect every red coin and build the course around that objective."
+        description: "One section at a time, or collectathon? It's up to you."
       },
       {
         name: "Freeform",
         weight: 1,
-        description: "Open-ended design with fewer structural restrictions."
+        description: "Do whatever you want with your level!"
       }
     ];
 
     const CLEAR_CONDITIONS = [
       "Reach the goal without taking damage.",
-      "Do not use a power-up.",
-      "Do not jump.",
-      "Do not stop moving for more than 2 seconds.",
-      "Collect every coin.",
-      "Do not kill any enemies."
+      "Reach the goal without landing after leaving the ground.",
+      "Reach the goal as <power-up form>.",
+      "Reach the goal after grabbing all/at least <number> Coins.",
+      "Reach the goal after defeating all/at least <number> <enemy>."
     ];
 
     // Each item has theme availability so invalid combinations never appear.
     const OBJECTS = [
-      { name: "Conveyor Belts", description: "Force movement and create timing-based setups.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
-      { name: "Yoshi", description: "Build the course around riding, mobility, and damage control.", themes: ["SMW", "NSMBU"] },
-      { name: "Clear Pipes", description: "Create route planning, alternate paths, and visual flow.", themes: ["SM3DW"] },
-      { name: "On/Off Switches", description: "Flip the whole level state and force route decisions.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
-      { name: "Snake Blocks", description: "Guide the player through moving paths and confined spaces.", themes: ["SM3DW"] },
-      { name: "Icicles", description: "Add falling hazard pressure and vertical danger.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
-      { name: "Tracks", description: "Drive moving platforms or hazards through the stage.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
-      { name: "P-Switches", description: "Turn the level into a timed coin or hazard puzzle.", themes: THEMES },
-      { name: "Lifts", description: "Create layered movement and vertical routing.", themes: THEMES },
-      { name: "Thwomps", description: "Punish hesitation with sudden impact timing.", themes: THEMES },
-      { name: "Burners", description: "Add short hazard windows that demand rhythm.", themes: THEMES },
-      { name: "One-Way Walls", description: "Limit backtracking and force committed routes.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
-      { name: "Blinking Blocks", description: "Create oscillating platforming and visual timing tests.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
-      { name: "Lava Lifts", description: "Mix moving platforms with rising danger.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
-      { name: "Warp Pipes", description: "Support shortcuts, branching routes, or hidden progression.", themes: THEMES }
+      { name: "Conveyor Belts", description: "Forces accelerated movement... or slows it down.", themes: THEMES },
+      { name: "Goombas Shoe", description: "Who even wears these? They're like size 20.", themes: ["SMB", "SMB3"] },
+      { name: "Yoshi", description: "Your companion comes in green or red variety!", themes: ["SMW", "NSMBU"] },
+      { name: "Clear Pipes", description: "Point A to Point B traveling made easy.", themes: ["SM3DW"] },
+      { name: "Koopa Car", description: "Beep beep, mothertrucker.", themes: ["SM3DW"] },
+      { name: "Koopa Clown Car", description: "Watch yo' jet, bro.", themes: ["SMB","SMB3", "SMW", "NSMBU"] },
+      { name: "On/Off Switches", description: "On, off, on, off, on--", themes: THEMES },
+      { name: "Snake Blocks", description: "Sssnakes around in ssstyle.", themes: THEMES },
+      { name: "Icicles", description: "Watch over your head!", themes: THEMES },
+      { name: "Tracks", description: "Stuff to put on said tracks sold separately.", themes: ["SMB","SMB3", "SMW", "NSMBU"] },
+      { name: "P-Switches", description: "I hope you don't need to P!", themes: THEMES },
+      { name: "POW-Blocks", description: "Boom, bam, bap, badabap boom, POW!", themes: THEMES },
+      { name: "Springs", description: "Boi-oi-oing!", themes: THEMES },
+      { name: "Lifts", description: "*Elevator music*", themes: ["SMB", "SMB3", "SMW", "NSMBU"] },
+      { name: "Fire Bars", description: "My head's spinning...", themes: ["SMB", "SMB3", "SMW", "NSMBU"] },
+      { name: "Turn Blocks", description: "Spin me right round, baby, right round.", themes: ["SMW"] },
+      { name: "Blinking Blocks", description: "Blink and you miss it!", themes: ["SM3DW"] },
+      { name: "Skull platforms", description: ":skull_emoji:", themes: ["SMB", "SMB3", "SMW", "NSMBU"] },
+      { name: "! Blocks", description: "I guess this one's a grower.", themes: ["SM3DW"] },
+      { name: "Vines", description: "Oh, don't be such a Richard!", themes: ["SMB", "SMB3", "SMW", "NSMBU"] },
+      { name: "Note Blocks", description: "♪♫~", themes: ["SMB", "SMB3", "SMW", "NSMBU"] },
+      { name: "Slopes", description: "Sisyphus would be proud.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
+      { name: "Donut Blocks", description: "D'OH!", themes: THEMES },
+      { name: "Claws", description: "Hey, let go of me!", themes: ["SMB", "SMB3", "SMW", "NSMBU"] },
+      { name: "Spike Balls", description: "Heh. Balls.", themes: THEMES },
+      { name: "Lakitus Cloud", description: "Goku would be proud!", themes: ["SMB", "SMB3", "SMW", "NSMBU"] },
+      { name: "Invisible Blocks", description: "AKA Kaizo blocks.", themes: THEMES },
+      { name: "Bill Blasters", description: "Blast 'em with bills!", themes: THEMES },
+      { name: "Dash Blocks", description: "Gotta go fast!", themes: ["SM3DW"] },
+      { name: "Twisters", description: "This guy BLOWS!", themes: THEMES },
+      { name: "Cannon", description: "Fire at will!", themes: ["SMB", "SMB3", "SMW", "NSMBU"] },
+      { name: "Seesaws", description: "I'm playing on tilt controls!", themes: ["SMB", "SMB3", "SMW", "NSMBU"] },
+      { name: "Bumpers", description: "Pumber incarnate.", themes: ["SMB", "SMB3", "SMW", "NSMBU"] },
+      { name: "Water", description: "But did Ben Drown?", themes: THEMES },
+      { name: "Lava", description: "Hot, hot, hot!", themes: THEMES },
+      { name: "Poison Water", description: "Oh, Ben DID drown!", themes: ["SMB", "SMB3", "SMW", "NSMBU"] },
+
+      { name: "Super Mushroom", description: "Did you know? Mushrooms are Goomba resprites!", themes: THEMES },
+      { name: "Fire Flower", description: "FIYA!", themes: THEMES },
+      { name: "Master Sword", description: "It's dangerous to go alone!", themes: ["SMB"] },
+      { name: "Superball Flower", description: "Ricochet your projectiles!", themes: ["SMB"] },
+      { name: "Super Leaf", description: "Hey, that's not what a raccoon does?!", themes: ["SMB3"] },
+      { name: "Frog Suit", description: "Ribbit.", themes: ["SMB3"] },
+      { name: "Cape Feather", description: "My people need me!", themes: ["SMW"] },
+      { name: "P-Balloon", description: "*pop*", themes: ["SMW"] },
+      { name: "Propeller Mushroom", description: "I'm getting dizzy...", themes: ["NSMBU"] },
+      { name: "Super Acorn", description: "Nut.", themes: ["NSMBU"] },
+      { name: "Boomerang Flower", description: "There it goes, and there it comes!", themes: ["SM3DW"] },
+      { name: "Cat Suit", description: "Uhhh... Meow? ¯\\_(ツ)_/¯", themes: ["SM3DW"] },
+      { name: "Propeller Mask", description: "Fly away to victory!", themes: ["SM3DW"] },
+      { name: "Cannon Mask", description: "Fire, but like not literally.", themes: ["SM3DW"] },
+      { name: "Bullet Bill Mask", description: "Wheee!", themes: ["SM3DW"] }
     ];
 
     const ENEMIES = [
-      { name: "Goombas", description: "Simple pressure and movement blockers.", themes: THEMES },
-      { name: "Koopas", description: "Shell interactions and classic patrol pressure.", themes: THEMES },
-      { name: "Piranha Plants", description: "Reliable lane control and timing hazards.", themes: THEMES },
-      { name: "Buzzy Beetles", description: "Low-profile enemies that change jump behavior.", themes: THEMES },
-      { name: "Dry Bones", description: "Persistent pressure that resets after being hit.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
-      { name: "Wigglers", description: "Calm movement until they are disturbed.", themes: ["SMW", "NSMBU", "SM3DW"] },
-      { name: "Hammer Bros.", description: "Projectile pressure and movement disruption.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
-      { name: "Magikoopas", description: "Spell-based threat that changes the battlefield.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
-      { name: "Fire Bros.", description: "Projectile-heavy enemy pressure for route control.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
-      { name: "Chain Chomps", description: "Strong area denial and path control.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
-      { name: "Pokeys", description: "Tall, segmented enemies that reshape jumps.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
-      { name: "Para-Biddybuds", description: "Floating pressure and awkward spacing.", themes: ["SM3DW"] },
-      { name: "Spikes", description: "Projectile tension and target prioritization.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
-      { name: "Boo Buddies", description: "Ghost pressure in enclosed or looping spaces.", themes: ["SMB3", "SMW", "NSMBU", "SM3DW"] },
-      { name: "Bob-ombs", description: "Explosive threat that can reshape the route.", themes: THEMES }
+      { name: "Goombas", description: "1-1 called.", themes: THEMES },
+      { name: "Koopas", description: "Stomping...", themes: THEMES },
+      { name: "Piranha Plants", description: "Someone get the herbicide.", themes: THEMES },
+      { name: "Buzzy Beetles", description: "Please don't spam shell jumps.", themes: ["SMB", "SMB3", "SMW", "NSMBU"] },
+      { name: "Spinys", description: "Step on me, I dare you!", themes: THEMES },
+      { name: "Spike Tops", description: "Spinys, except they think they are Spider-Man.", themes: ["SMB", "SMB3", "SMW", "NSMBU"] },
+      { name: "Cheep Cheeps", description: "Talk is cheap... cheap.", themes: THEMES },
+      { name: "Bloopers", description: "In Mario Kart, nearly useless.", themes: THEMES },
+      { name: "Lava Bubble", description: "Hot-headed little guys.", themes: THEMES },
+      { name: "Dry Bones", description: "I'M DEAD!", themes: THEMES },
+      { name: "Munchers", description: "Does nothing -> Everyone loves them. Makes sense.", themes: ["SMB", "SMB3", "SMW", "NSMBU"] },
+      { name: "Wigglers", description: "Still mad Bowser ate their carrot.", themes: ["SMB", "SMB3", "SMW", "NSMBU"] },
+      { name: "Thwomps", description: "UUURGH!!!", themes: THEMES },
+      { name: "Hammer Bros.", description: "STOP! Hammer time!", themes: THEMES },
+      { name: "Chain Chomps", description: "Man's best friend, turned evil.", themes: ["SMB", "SMB3", "SMW", "NSMBU"] },
+      { name: "Pokeys", description: "Sooo how's the weather up there?", themes: THEMES },
+      { name: "Monty Moles", description: "They dig, and they run!", themes: ["SMB", "SMB3", "SMW", "NSMBU"] },
+      { name: "Spikes", description: "As in, the guy that spits spike balls.", themes: THEMES },
+      { name: "Boos", description: "AAH!", themes: THEMES },
+      { name: "Bob-ombs", description: "Shoutouts to Bobby.", themes: THEMES },
+      { name: "Skipsqueaks", description: "ILOVEMOUSE", themes: ["SM3DW"] },
+      { name: "Mechakoopas", description: "That clanker...", themes: ["SMB", "SMB3", "SMW", "NSMBU"] },
+      { name: "Boom Boom", description: "The mad lad!", themes: THEMES },
+      { name: "Ant Troopers", description: "Big ants, small world.", themes: ["SM3DW"] },
+      { name: "Stingby", description: "NOT THE BEES!", themes: ["SM3DW"] },
+      { name: "Pirhana Creeper", description: "Say sike right now.", themes: ["SM3DW"] },
+      { name: "Bullies", description: "Hey, watch where you're going!", themes: ["SM3DW"] },
+      { name: "Koopalings", description: "Bowser's rebellious (adopted) children.", themes: ["SMB", "SMB3", "SMW", "NSMBU"] }
     ];
 
     // ------------------------------------------------------------
@@ -368,13 +417,13 @@
       if (style.name === "Speedrun") {
         const seconds = 30 + Math.floor(rng() * 4) * 10; // 30, 40, 50, 60
         return {
-          label: "Target Time",
+          label: "Time Limit",
           value: `${seconds} seconds`
         };
       }
 
       if (style.name === "Red Coin") {
-        const redCoins = 3 + Math.floor(rng() * 7); // 3 through 9
+        const redCoins = 4 + Math.floor(rng() * 7); // 4 through 10
         return {
           label: "Red Coins",
           value: `${redCoins} red coin${redCoins === 1 ? "" : "s"}`
@@ -451,7 +500,7 @@
           value: detailValue,
           description:
             style.name === "Speedrun"
-              ? "Use a time target instead of checkpoints."
+              ? "Set the timer to this value."
               : style.name === "Red Coin"
                 ? "Use a red coin objective instead of checkpoints."
                 : "Regular checkpoint count for this course."
