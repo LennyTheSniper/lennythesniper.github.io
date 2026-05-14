@@ -4,208 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SMM2 Random Theme Assigner</title>
-
-  <style>
-    :root {
-      --bg: #111827;
-      --panel: #1f2937;
-      --panel-2: #0f172a;
-      --text: #f9fafb;
-      --muted: #9ca3af;
-      --line: rgba(255,255,255,0.08);
-      --accent: #60a5fa;
-      --good: #34d399;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: system-ui, sans-serif;
-      background: radial-gradient(circle at top, #1f2937, var(--bg) 62%);
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 24px;
-    }
-
-    .card {
-      background: rgba(31, 41, 55, 0.96);
-      padding: 32px;
-      border-radius: 18px;
-      max-width: 860px;
-      width: 100%;
-      box-shadow: 0 18px 48px rgba(0,0,0,0.45);
-      border: 1px solid var(--line);
-    }
-
-    h1 {
-      margin: 0 0 10px;
-      font-size: 30px;
-      line-height: 1.1;
-    }
-
-    .subtitle {
-      margin: 0 0 24px;
-      color: var(--muted);
-      line-height: 1.5;
-    }
-
-    .controls {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-
-    .controls input {
-      width: 100%;
-      padding: 14px 16px;
-      border-radius: 12px;
-      border: 1px solid var(--line);
-      background: var(--panel-2);
-      color: var(--text);
-      font-size: 16px;
-      outline: none;
-    }
-
-    .controls input:focus {
-      border-color: rgba(96, 165, 250, 0.8);
-      box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
-    }
-
-    .controls button {
-      padding: 14px 18px;
-      border: 0;
-      border-radius: 12px;
-      background: linear-gradient(180deg, #60a5fa, #3b82f6);
-      color: white;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform 0.08s ease, filter 0.15s ease;
-      white-space: nowrap;
-    }
-
-    .controls button:hover {
-      filter: brightness(1.05);
-    }
-
-    .controls button:active {
-      transform: translateY(1px);
-    }
-
-    .output {
-      background: rgba(17, 24, 39, 0.72);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 24px;
-    }
-
-    .seed-line {
-      color: var(--muted);
-      font-size: 14px;
-      margin-bottom: 14px;
-    }
-
-    .big-result {
-      font-size: 26px;
-      line-height: 1.35;
-      margin: 0 0 18px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-    }
-
-    .item {
-      background: rgba(31, 41, 55, 0.9);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 14px 16px;
-      min-height: 100%;
-    }
-
-    .label {
-      color: var(--muted);
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 8px;
-    }
-
-    .value {
-      font-size: 18px;
-      line-height: 1.45;
-    }
-
-    .value strong {
-      color: #fff;
-    }
-
-    .description {
-      margin-top: 8px;
-      color: #d1d5db;
-      font-size: 14px;
-      line-height: 1.5;
-    }
-
-    .note {
-      margin-top: 18px;
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.5;
-    }
-
-    .pill-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 14px;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: rgba(96, 165, 250, 0.12);
-      border: 1px solid rgba(96, 165, 250, 0.25);
-      color: #dbeafe;
-      font-size: 13px;
-      white-space: nowrap;
-    }
-
-    @media (max-width: 720px) {
-      .controls,
-      .grid {
-        grid-template-columns: 1fr;
-      }
-
-      .card {
-        padding: 22px;
-      }
-
-      h1 {
-        font-size: 26px;
-      }
-
-      .big-result {
-        font-size: 22px;
-      }
-    }
-  </style>
+  <link rel="icon" type="image/png" href="assets/MJ-icon.png" />
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
   <div class="card">
-    <h1>SMM2 Theme Assigner</h1>
+    <header class="brand">
+      <img class="brand-logo" src="assets/maker-jam.png" alt="Maker Jam" />
+      <h1>SMM2 Theme Assigner</h1>
+    </header>
     <p class="subtitle">
       Enter your username to get your randomized theme assignment.
     </p>
@@ -237,6 +44,124 @@
 
     const THEMES = ["SMB", "SMB3", "SMW", "NSMBU", "SM3DW"];
 
+    const ICON_PATHS = {
+      theme: {
+        smb: "assets/icons/themes/smb.png",
+        smb3: "assets/icons/themes/smb3.png",
+        smw: "assets/icons/themes/smw.png",
+        nsmbu: "assets/icons/themes/nsmbu.png",
+        sm3dw: "assets/icons/themes/sm3dw.png"
+      },
+      style: {
+        "kaizo-platforming": "assets/icons/styles/kaizo.png",
+        speedrun: "assets/icons/styles/speedrun.png",
+        precision: "assets/icons/styles/precision.png",
+        "red-coin": "assets/icons/styles/red-coin.png",
+        freeform: "assets/icons/styles/freeform.png"
+      },
+      detail: {
+        timer: "assets/icons/details/timer.png",
+        checkpoints: "assets/icons/details/checkpoints.png",
+        "red-coins": "assets/icons/details/red-coins.png"
+      },
+      clearCondition: {
+        "not-required": "assets/icons/clear-conditions/not-required.png",
+        "reach-the-goal-without-taking-damage": "assets/icons/clear-conditions/no-damage.png",
+        "reach-the-goal-without-landing-after-leaving-the-ground": "assets/icons/clear-conditions/no-landing.png",
+        "reach-the-goal-as-power-up-form": "assets/icons/clear-conditions/power-up.png",
+        "reach-the-goal-after-grabbing-all-at-least-number-coins": "assets/icons/clear-conditions/coins.png",
+        "reach-the-goal-after-defeating-all-at-least-number-enemy": "assets/icons/clear-conditions/enemies.png"
+      },
+      object: {
+        "conveyor-belts": "assets/icons/objects/conveyor-belts.png",
+        "goombas-shoe": "assets/icons/objects/goombas-shoe.png",
+        yoshi: "assets/icons/objects/yoshi.png",
+        "clear-pipes": "assets/icons/objects/clear-pipes.png",
+        "koopa-car": "assets/icons/objects/koopa-car.png",
+        "koopa-clown-car": "assets/icons/objects/koopa-clown-car.png",
+        "on-off-switches": "assets/icons/objects/on-off-switches.png",
+        "snake-blocks": "assets/icons/objects/snake-blocks.png",
+        icicles: "assets/icons/objects/icicles.png",
+        tracks: "assets/icons/objects/tracks.png",
+        "p-switches": "assets/icons/objects/p-switches.png",
+        "pow-blocks": "assets/icons/objects/pow-blocks.png",
+        springs: "assets/icons/objects/springs.png",
+        lifts: "assets/icons/objects/lifts.png",
+        "fire-bars": "assets/icons/objects/fire-bars.png",
+        "turn-blocks": "assets/icons/objects/turn-blocks.png",
+        "blinking-blocks": "assets/icons/objects/blinking-blocks.png",
+        "skull-platforms": "assets/icons/objects/skull-platforms.png",
+        blocks: "assets/icons/objects/blocks.png",
+        vines: "assets/icons/objects/vines.png",
+        "note-blocks": "assets/icons/objects/note-blocks.png",
+        slopes: "assets/icons/objects/slopes.png",
+        "donut-blocks": "assets/icons/objects/donut-blocks.png",
+        claws: "assets/icons/objects/claws.png",
+        "spike-balls": "assets/icons/objects/spike-balls.png",
+        "lakitus-cloud": "assets/icons/objects/lakitus-cloud.png",
+        "invisible-blocks": "assets/icons/objects/invisible-blocks.png",
+        "bill-blasters": "assets/icons/objects/bill-blasters.png",
+        "dash-blocks": "assets/icons/objects/dash-blocks.png",
+        twisters: "assets/icons/objects/twisters.png",
+        cannon: "assets/icons/objects/cannon.png",
+        seesaws: "assets/icons/objects/seesaws.png",
+        bumpers: "assets/icons/objects/bumpers.png",
+        water: "assets/icons/objects/water.png",
+        lava: "assets/icons/objects/lava.png",
+        "poison-water": "assets/icons/objects/poison-water.png",
+        "super-mushroom": "assets/icons/objects/super-mushroom.png",
+        "fire-flower": "assets/icons/objects/fire-flower.png",
+        "shellmet": "assets/icons/objects/shellmet.png",
+        "spiky-shellmet": "assets/icons/objects/spiky-shellmet.png",
+        "master-sword": "assets/icons/objects/master-sword.png",
+        "superball-flower": "assets/icons/objects/superball-flower.png",
+        "smb2-mushroom": "assets/icons/objects/smb2-mushroom.png",
+        "big-mushroom": "assets/icons/objects/big-mushroom.png",
+        "super-leaf": "assets/icons/objects/super-leaf.png",
+        "frog-suit": "assets/icons/objects/frog-suit.png",
+        "cape-feather": "assets/icons/objects/cape-feather.png",
+        "p-balloon": "assets/icons/objects/p-balloon.png",
+        "propeller-mushroom": "assets/icons/objects/propeller-mushroom.png",
+        "super-acorn": "assets/icons/objects/super-acorn.png",
+        "boomerang-flower": "assets/icons/objects/boomerang-flower.png",
+        "super-bell": "assets/icons/objects/super-bell.png",
+        "builder-suit": "assets/icons/objects/builder-suit.png",
+        "propeller-mask": "assets/icons/objects/propeller-mask.png",
+        "cannon-mask": "assets/icons/objects/cannon-mask.png",
+        "bullet-bill-mask": "assets/icons/objects/bullet-bill-mask.png"
+      },
+      enemy: {
+        goombas: "assets/icons/enemies/goombas.png",
+        koopas: "assets/icons/enemies/koopas.png",
+        "piranha-plants": "assets/icons/enemies/piranha-plants.png",
+        "buzzy-beetles": "assets/icons/enemies/buzzy-beetles.png",
+        spinys: "assets/icons/enemies/spinys.png",
+        "spike-tops": "assets/icons/enemies/spike-tops.png",
+        "cheep-cheeps": "assets/icons/enemies/cheep-cheeps.png",
+        bloopers: "assets/icons/enemies/bloopers.png",
+        "lava-bubble": "assets/icons/enemies/lava-bubble.png",
+        "dry-bones": "assets/icons/enemies/dry-bones.png",
+        munchers: "assets/icons/enemies/munchers.png",
+        wigglers: "assets/icons/enemies/wigglers.png",
+        thwomps: "assets/icons/enemies/thwomps.png",
+        "hammer-bros": "assets/icons/enemies/hammer-bros.png",
+        "chain-chomps": "assets/icons/enemies/chain-chomps.png",
+        pokeys: "assets/icons/enemies/pokeys.png",
+        "monty-moles": "assets/icons/enemies/monty-moles.png",
+        spikes: "assets/icons/enemies/spikes.png",
+        boos: "assets/icons/enemies/boos.png",
+        "bob-ombs": "assets/icons/enemies/bob-ombs.png",
+        skipsqueaks: "assets/icons/enemies/skipsqueaks.png",
+        mechakoopas: "assets/icons/enemies/mechakoopas.png",
+        "boom-boom": "assets/icons/enemies/boom-boom.png",
+        "ant-troopers": "assets/icons/enemies/ant-troopers.png",
+        stingby: "assets/icons/enemies/stingby.png",
+        "pirhana-creeper": "assets/icons/enemies/pirhana-creeper.png",
+        bullies: "assets/icons/enemies/bullies.png",
+        koopalings: "assets/icons/enemies/koopalings.png"
+      }
+    };
+
     const STYLES = [
       {
         name: "Kaizo/Platforming",
@@ -255,7 +180,7 @@
       },
       {
         name: "Red Coin",
-        weight: 2,
+        weight: 1,
         description: "One section at a time, or collectathon? It's up to you."
       },
       {
@@ -314,8 +239,12 @@
 
       { name: "Super Mushroom", description: "Did you know? Mushrooms are Goomba resprites!", themes: THEMES },
       { name: "Fire Flower", description: "FIYA!", themes: THEMES },
+      { name: "Shellmet", description: "OSHA approved!", themes: ["SMB", "SMB3", "SMW", "NSMBU"] },
+      { name: "Spiky Shellmet", description: "Now how to get that ?-block?", themes: ["SMB", "SMB3", "SMW", "NSMBU"] },
       { name: "Master Sword", description: "It's dangerous to go alone!", themes: ["SMB"] },
       { name: "Superball Flower", description: "Ricochet your projectiles!", themes: ["SMB"] },
+      { name: "SMB2 Mushroom", description: "They took our extra game style for this.", themes: ["SMB"] },
+      { name: "Big Mushroom", description: "Mario ate too much pasta.", themes: ["SMB"] },
       { name: "Super Leaf", description: "Hey, that's not what a raccoon does?!", themes: ["SMB3"] },
       { name: "Frog Suit", description: "Ribbit.", themes: ["SMB3"] },
       { name: "Cape Feather", description: "My people need me!", themes: ["SMW"] },
@@ -323,7 +252,8 @@
       { name: "Propeller Mushroom", description: "I'm getting dizzy...", themes: ["NSMBU"] },
       { name: "Super Acorn", description: "Nut.", themes: ["NSMBU"] },
       { name: "Boomerang Flower", description: "There it goes, and there it comes!", themes: ["SM3DW"] },
-      { name: "Cat Suit", description: "Uhhh... Meow? ¯\\_(ツ)_/¯", themes: ["SM3DW"] },
+      { name: "Super Bell", description: "Uhhh... Meow? ¯\\_(ツ)_/¯", themes: ["SM3DW"] },
+      { name: "Builder Suit", description: "Mario Maker-ception!", themes: ["SM3DW"] },
       { name: "Propeller Mask", description: "Fly away to victory!", themes: ["SM3DW"] },
       { name: "Cannon Mask", description: "Fire, but like not literally.", themes: ["SM3DW"] },
       { name: "Bullet Bill Mask", description: "Wheee!", themes: ["SM3DW"] }
@@ -408,6 +338,47 @@
       return pick(pool, rng);
     }
 
+    function slugify(value) {
+      return value
+        .toString()
+        .toLowerCase()
+        .replace(/[<>]/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+    }
+
+    function escapeHTML(value) {
+      return value.toString().replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#39;"
+      }[char]));
+    }
+
+    function renderIcon(item) {
+      const iconPath = ICON_PATHS[item.iconType]?.[item.iconKey];
+      if (!iconPath) return "";
+
+      return `<img class="item-icon" src="${escapeHTML(iconPath)}" alt="${escapeHTML(item.value)} icon" onerror="this.remove()" />`;
+    }
+
+    function renderDetailItem(item) {
+      return `
+        <div class="item">
+          <div class="label">${escapeHTML(item.label)}</div>
+          <div class="value">
+            <span class="value-line">
+              ${renderIcon(item)}
+              <strong>${escapeHTML(item.value)}</strong>
+            </span>
+          </div>
+          <div class="description">${escapeHTML(item.description)}</div>
+        </div>
+      `;
+    }
+
     function maybeClearCondition(styleName, rng) {
       const chance = styleName === "Speedrun" ? 1 / 3 : 1 / 2;
       return rng() < chance ? pick(CLEAR_CONDITIONS, rng) : null;
@@ -488,39 +459,56 @@
         {
           label: "Level Theme",
           value: theme,
+          iconType: "theme",
+          iconKey: slugify(theme),
           description: "The game style the course must use."
         },
         {
           label: "Level Style",
           value: style.name,
+          iconType: "style",
+          iconKey: slugify(style.name),
           description: style.description
         },
         {
           label: detailLabel,
           value: detailValue,
+          iconType: "detail",
+          iconKey:
+            detailLabel === "Time Limit"
+              ? "timer"
+              : detailLabel === "Red Coins"
+                ? "red-coins"
+                : "checkpoints",
           description:
             style.name === "Speedrun"
               ? "Set the timer to this value."
               : style.name === "Red Coin"
-                ? "Use a red coin objective instead of checkpoints."
+                ? "Use this amount of red coins."
                 : "Regular checkpoint count for this course."
         },
         {
           label: "Clear Condition",
           value: clearCondition ? clearCondition : "Not required",
+          iconType: "clearCondition",
+          iconKey: clearCondition ? slugify(clearCondition) : "not-required",
           description:
             clearCondition
-              ? "This course should explicitly include a clear condition."
+              ? "This course should explicitly include the following clear condition."
               : "No extra clear condition required."
         },
         {
           label: "Main Object",
           value: mainObject.name,
+          iconType: "object",
+          iconKey: slugify(mainObject.name),
           description: mainObject.description
         },
         {
           label: "Main Enemy",
           value: mainEnemy.name,
+          iconType: "enemy",
+          iconKey: slugify(mainEnemy.name),
           description: mainEnemy.description
         }
       ];
@@ -529,13 +517,7 @@
       document.getElementById("headline").innerHTML =
         `Assigned course: <strong>${theme}</strong> <strong>${style.name}</strong>`;
 
-      document.getElementById("details").innerHTML = details.map(item => `
-        <div class="item">
-          <div class="label">${item.label}</div>
-          <div class="value"><strong>${item.value}</strong></div>
-          <div class="description">${item.description}</div>
-        </div>
-      `).join("");
+      document.getElementById("details").innerHTML = details.map(renderDetailItem).join("");
     }
 
     // ------------------------------------------------------------
