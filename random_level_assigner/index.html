@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SMM2 Random Theme Assigner</title>
   <link rel="icon" type="image/png" href="assets/MJ-icon.png" />
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/style.css?v=2026-05-15-2" />
 </head>
 <body>
   <div class="card">
@@ -511,7 +511,10 @@
       const padding = 56;
       const gap = 22;
       const cardWidth = (width - padding * 2 - gap) / 2;
-      const logoHeight = 84;
+      const headerTopOffset = 24;
+      const headerLogoWidth = 380;
+      const headerLogoHeight = 134;
+      const headerTextWidth = width - padding * 2 - headerLogoWidth - 44;
       const itemPadding = 24;
       const iconSize = 42;
       const detailLayouts = [];
@@ -521,8 +524,9 @@
       const headlineLines = wrapCanvasText(
         scratch,
         `Assigned course: ${currentAssignment.theme} ${currentAssignment.styleName}`,
-        width - padding * 2
+        headerTextWidth
       );
+      const headerHeight = Math.max(headerLogoHeight, 42 + headlineLines.length * 40);
 
       scratch.font = "700 28px system-ui, sans-serif";
       for (const item of currentAssignment.details) {
@@ -533,7 +537,7 @@
         scratch.font = "400 20px system-ui, sans-serif";
         const descriptionLines = wrapCanvasText(scratch, item.description, textWidth);
 
-        const height = itemPadding * 2 + 18 + 14 + Math.max(iconSize, valueLines.length * 34) + 13 + descriptionLines.length * 28;
+        const height = itemPadding * 2 + 28 + 18 + Math.max(iconSize, valueLines.length * 34) + 13 + descriptionLines.length * 28;
         detailLayouts.push({ item, valueLines, descriptionLines, height: Math.max(170, height) });
         scratch.font = "700 28px system-ui, sans-serif";
       }
@@ -549,7 +553,7 @@
         "Theme-gated picks are filtered so invalid combinations do not appear. If your theme has an impossible combination, contact LennyTheSniper on Twitter or Discord to get it fixed!",
         width - padding * 2
       );
-      const height = padding + logoHeight + 28 + 28 + headlineLines.length * 38 + 36 + rowHeights.reduce((sum, row) => sum + row, 0) + gap * 2 + 34 + noteLines.length * 27 + padding;
+      const height = padding + headerTopOffset + headerHeight + 40 + rowHeights.reduce((sum, row) => sum + row, 0) + gap * 2 + 34 + noteLines.length * 27 + padding;
 
       const canvas = document.createElement("canvas");
       canvas.width = width * scale;
@@ -572,22 +576,26 @@
       ctx.stroke();
 
       const logo = await loadImage("assets/maker-jam.png");
-      let y = padding;
+      let y = padding + headerTopOffset;
       if (logo) {
-        const logoWidth = 312;
-        drawContainedImage(ctx, logo, padding, y, logoWidth, logoHeight);
+        drawContainedImage(
+          ctx,
+          logo,
+          width - padding - headerLogoWidth,
+          y,
+          headerLogoWidth,
+          headerLogoHeight
+        );
       }
 
-      y += logoHeight + 28;
       ctx.fillStyle = "#c1c8d4";
       ctx.font = "400 21px system-ui, sans-serif";
-      ctx.fillText(`Seed used: ${currentAssignment.seedValue}`, padding, y);
+      ctx.fillText(`Seed used: ${currentAssignment.seedValue}`, padding, y + 42);
 
-      y += 36;
       ctx.fillStyle = "#ffffff";
       ctx.font = "800 34px system-ui, sans-serif";
-      drawTextLines(ctx, headlineLines, padding, y, 38);
-      y += headlineLines.length * 38 + 30;
+      drawTextLines(ctx, headlineLines, padding, y + 86, 40);
+      y += headerHeight + 40;
 
       for (let row = 0; row < 3; row++) {
         const rowY = y;
@@ -605,11 +613,11 @@
 
           ctx.fillStyle = "#c1c8d4";
           ctx.font = "700 17px system-ui, sans-serif";
-          ctx.fillText(item.label.toUpperCase(), x + itemPadding, rowY + itemPadding + 17);
+          ctx.fillText(item.label.toUpperCase(), x + itemPadding, rowY + itemPadding + 25);
 
           const iconPath = ICON_PATHS[item.iconType]?.[item.iconKey];
           const icon = await loadImage(iconPath);
-          const valueY = rowY + itemPadding + 56;
+          const valueY = rowY + itemPadding + 66;
           if (icon) {
             drawContainedImage(ctx, icon, x + itemPadding, valueY - 4, iconSize, iconSize);
           }
