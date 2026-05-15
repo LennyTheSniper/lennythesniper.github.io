@@ -63,8 +63,9 @@ h1 {
 
 .controls {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: minmax(220px, 1fr) max-content max-content;
   gap: 12px;
+  align-items: stretch;
   margin-bottom: 24px;
 }
 
@@ -97,9 +98,11 @@ h1 {
   white-space: nowrap;
 }
 
-.controls button.secondary-button {
+.controls button#screenshotBtn.secondary-button {
   border-color: var(--line);
   background: rgba(17, 24, 39, 0.74);
+  background-image: none;
+  color: var(--text);
 }
 
 .controls button:hover {
@@ -221,9 +224,22 @@ h1 {
     background-attachment: scroll;
   }
 
-  .controls,
   .grid {
     grid-template-columns: 1fr;
+  }
+
+  .controls {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .controls input {
+    grid-column: 1 / -1;
+  }
+
+  .controls button {
+    width: 100%;
+    padding-inline: 12px;
+    white-space: normal;
   }
 
   .card {

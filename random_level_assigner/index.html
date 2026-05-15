@@ -438,6 +438,15 @@
       });
     }
 
+    function drawContainedImage(ctx, image, x, y, width, height) {
+      const scale = Math.min(width / image.width, height / image.height);
+      const renderedWidth = image.width * scale;
+      const renderedHeight = image.height * scale;
+      const renderedX = x + (width - renderedWidth) / 2;
+      const renderedY = y + (height - renderedHeight) / 2;
+      ctx.drawImage(image, renderedX, renderedY, renderedWidth, renderedHeight);
+    }
+
     function canvasToBlob(canvas) {
       return new Promise((resolve, reject) => {
         try {
@@ -494,138 +503,6 @@
       const writable = await fileHandle.createWritable();
       await writable.write(blob);
       await writable.close();
-    }
-
-    function assetUrl(path) {
-      return new URL(path, document.baseURI).href;
-    }
-
-    function createSvgScreenshotBlob() {
-      const width = 1200;
-      const details = currentAssignment.details.map((item) => {
-        const iconPath = ICON_PATHS[item.iconType]?.[item.iconKey];
-        const iconMarkup = iconPath
-          ? `<img class="item-icon" src="${escapeHTML(assetUrl(iconPath))}" alt="" />`
-          : "";
-
-        return `
-          <div class="shot-item">
-            <div class="shot-label">${escapeHTML(item.label)}</div>
-            <div class="shot-value">
-              ${iconMarkup}
-              <strong>${escapeHTML(item.value)}</strong>
-            </div>
-            <div class="shot-description">${escapeHTML(item.description)}</div>
-          </div>
-        `;
-      }).join("");
-
-      const svg = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="1120" viewBox="0 0 ${width} 1120">
-          <defs>
-            <linearGradient id="shot-bg" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#111827" />
-              <stop offset="0.55" stop-color="#172033" />
-              <stop offset="1" stop-color="#0b1020" />
-            </linearGradient>
-          </defs>
-          <rect width="1200" height="1120" fill="url(#shot-bg)" />
-          <rect x="28" y="28" width="1144" height="1064" rx="26" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.16)" stroke-width="2" />
-          <foreignObject x="56" y="56" width="1088" height="1008">
-            <div xmlns="http://www.w3.org/1999/xhtml" class="shot">
-              <style>
-                .shot {
-                  width: 1088px;
-                  color: #f9fafb;
-                  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-                }
-                .shot-logo {
-                  display: block;
-                  width: 312px;
-                  max-height: 84px;
-                  object-fit: contain;
-                  object-position: left center;
-                  margin: 0 0 28px;
-                }
-                .shot-seed {
-                  margin: 0 0 18px;
-                  color: #c1c8d4;
-                  font-size: 21px;
-                  line-height: 1.35;
-                }
-                .shot-title {
-                  margin: 0 0 30px;
-                  color: #fff;
-                  font-size: 34px;
-                  font-weight: 800;
-                  line-height: 1.2;
-                }
-                .shot-grid {
-                  display: grid;
-                  grid-template-columns: repeat(2, minmax(0, 1fr));
-                  gap: 22px;
-                }
-                .shot-item {
-                  min-height: 170px;
-                  padding: 24px;
-                  border: 2px solid rgba(255, 255, 255, 0.16);
-                  border-radius: 18px;
-                  background: rgba(17, 24, 39, 0.78);
-                  box-sizing: border-box;
-                }
-                .shot-label {
-                  margin-bottom: 14px;
-                  color: #c1c8d4;
-                  font-size: 17px;
-                  font-weight: 700;
-                  line-height: 1.15;
-                  text-transform: uppercase;
-                }
-                .shot-value {
-                  display: flex;
-                  align-items: center;
-                  gap: 14px;
-                  min-height: 42px;
-                  color: #fff;
-                  font-size: 28px;
-                  font-weight: 800;
-                  line-height: 1.2;
-                }
-                .shot-value strong {
-                  min-width: 0;
-                }
-                .item-icon {
-                  width: 42px;
-                  height: 42px;
-                  flex: 0 0 42px;
-                  object-fit: contain;
-                }
-                .shot-description {
-                  margin-top: 18px;
-                  color: #d1d5db;
-                  font-size: 20px;
-                  line-height: 1.4;
-                }
-                .shot-note {
-                  margin-top: 34px;
-                  color: #c1c8d4;
-                  font-size: 19px;
-                  line-height: 1.42;
-                }
-              </style>
-              <img class="shot-logo" src="${escapeHTML(assetUrl("assets/maker-jam.png"))}" alt="Maker Jam" />
-              <div class="shot-seed">Seed used: ${escapeHTML(currentAssignment.seedValue)}</div>
-              <div class="shot-title">Assigned course: ${escapeHTML(currentAssignment.theme)} ${escapeHTML(currentAssignment.styleName)}</div>
-              <div class="shot-grid">${details}</div>
-              <div class="shot-note">
-                Theme-gated picks are filtered so invalid combinations do not appear. If your theme has an impossible combination, contact LennyTheSniper on Twitter or Discord to get it fixed!
-              </div>
-            </div>
-          </foreignObject>
-        </svg>
-      `.trim();
-
-      return new Blob([svg], { type: "image/svg+xml" });
     }
 
     async function renderAssignmentCanvas() {
@@ -697,8 +574,8 @@
       const logo = await loadImage("assets/maker-jam.png");
       let y = padding;
       if (logo) {
-        const logoWidth = Math.min(312, logo.width * (logoHeight / logo.height));
-        ctx.drawImage(logo, padding, y, logoWidth, logoHeight);
+        const logoWidth = 312;
+        drawContainedImage(ctx, logo, padding, y, logoWidth, logoHeight);
       }
 
       y += logoHeight + 28;
@@ -734,7 +611,7 @@
           const icon = await loadImage(iconPath);
           const valueY = rowY + itemPadding + 56;
           if (icon) {
-            ctx.drawImage(icon, x + itemPadding, valueY - 4, iconSize, iconSize);
+            drawContainedImage(ctx, icon, x + itemPadding, valueY - 4, iconSize, iconSize);
           }
 
           ctx.fillStyle = "#ffffff";
@@ -757,18 +634,7 @@
     }
 
     async function createAssignmentScreenshotBlob() {
-      try {
-        return {
-          blob: await canvasToBlob(await renderAssignmentCanvas()),
-          extension: "png"
-        };
-      } catch (error) {
-        console.warn("PNG screenshot failed, saving an SVG image with the original artwork instead.", error);
-        return {
-          blob: createSvgScreenshotBlob(),
-          extension: "svg"
-        };
-      }
+      return canvasToBlob(await renderAssignmentCanvas());
     }
 
     async function saveAssignmentScreenshot() {
@@ -801,24 +667,25 @@
       try {
         await document.fonts?.ready;
 
-        const result = await createAssignmentScreenshotBlob();
-        const outputFilename = result.extension === "png"
-          ? filename
-          : `smm2-assignment-${slugify(currentAssignment.seedValue) || "seed"}.svg`;
+        const blob = await createAssignmentScreenshotBlob();
 
-        if (fileHandle && result.extension === "png") {
+        if (fileHandle) {
           try {
-            await writeBlobToFileHandle(fileHandle, result.blob);
+            await writeBlobToFileHandle(fileHandle, blob);
             return;
           } catch (error) {
             console.warn("Could not write to picked file, using download fallback.", error);
           }
         }
 
-        downloadBlob(result.blob, outputFilename);
+        downloadBlob(blob, filename);
       } catch (error) {
         console.error("Screenshot failed.", error);
-        alert("The screenshot could not be saved. Please try again.");
+        if (window.location.protocol === "file:") {
+          alert("Your browser blocked the screenshot because this page is opened as a local file. It should work on the published site, or from a local web server.");
+        } else {
+          alert("The screenshot could not be saved. Please try again.");
+        }
       } finally {
         screenshotBtn.disabled = false;
         screenshotBtn.textContent = "Save screenshot";
