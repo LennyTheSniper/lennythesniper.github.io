@@ -25,6 +25,7 @@
         autocomplete="off"
       />
       <button id="generateBtn" type="button">Generate assignment</button>
+      <button id="screenshotBtn" class="secondary-button" type="button" disabled>Save screenshot</button>
     </div>
 
     <div class="output" id="output">
@@ -198,6 +199,8 @@
       "Reach the goal after grabbing all/at least <number> Coins.",
       "Reach the goal after defeating all/at least <number> <enemy>."
     ];
+
+    let currentAssignment = null;
 
     // Each item has theme availability so invalid combinations never appear.
     const OBJECTS = [
@@ -381,6 +384,447 @@
       `;
     }
 
+    function wrapCanvasText(ctx, text, maxWidth) {
+      const words = text.toString().split(/\s+/);
+      const lines = [];
+      let line = "";
+
+      for (const word of words) {
+        const testLine = line ? `${line} ${word}` : word;
+        if (ctx.measureText(testLine).width <= maxWidth || !line) {
+          line = testLine;
+        } else {
+          lines.push(line);
+          line = word;
+        }
+      }
+
+      if (line) lines.push(line);
+      return lines;
+    }
+
+    function drawRoundedRect(ctx, x, y, width, height, radius) {
+      const safeRadius = Math.min(radius, width / 2, height / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + safeRadius, y);
+      ctx.lineTo(x + width - safeRadius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + safeRadius);
+      ctx.lineTo(x + width, y + height - safeRadius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - safeRadius, y + height);
+      ctx.lineTo(x + safeRadius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - safeRadius);
+      ctx.lineTo(x, y + safeRadius);
+      ctx.quadraticCurveTo(x, y, x + safeRadius, y);
+      ctx.closePath();
+    }
+
+    function loadImage(src) {
+      return new Promise((resolve) => {
+        if (!src) {
+          resolve(null);
+          return;
+        }
+
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => resolve(null);
+        image.src = src;
+      });
+    }
+
+    function drawTextLines(ctx, lines, x, y, lineHeight) {
+      lines.forEach((line, index) => {
+        ctx.fillText(line, x, y + index * lineHeight);
+      });
+    }
+
+    function canvasToBlob(canvas) {
+      return new Promise((resolve, reject) => {
+        try {
+          canvas.toBlob((blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error("Canvas export returned no image data."));
+            }
+          }, "image/png");
+        } catch (error) {
+          reject(error);
+        }
+      });
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    async function requestSaveFileHandle(filename) {
+      if (!window.showSaveFilePicker || !window.isSecureContext) {
+        return null;
+      }
+
+      try {
+        return await window.showSaveFilePicker({
+          suggestedName: filename,
+          types: [
+            {
+              description: "PNG image",
+              accept: { "image/png": [".png"] }
+            }
+          ]
+        });
+      } catch (error) {
+        if (error?.name === "AbortError") {
+          throw error;
+        }
+
+        console.warn("Save picker unavailable, using download fallback.", error);
+        return null;
+      }
+    }
+
+    async function writeBlobToFileHandle(fileHandle, blob) {
+      const writable = await fileHandle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+    }
+
+    function assetUrl(path) {
+      return new URL(path, document.baseURI).href;
+    }
+
+    function createSvgScreenshotBlob() {
+      const width = 1200;
+      const details = currentAssignment.details.map((item) => {
+        const iconPath = ICON_PATHS[item.iconType]?.[item.iconKey];
+        const iconMarkup = iconPath
+          ? `<img class="item-icon" src="${escapeHTML(assetUrl(iconPath))}" alt="" />`
+          : "";
+
+        return `
+          <div class="shot-item">
+            <div class="shot-label">${escapeHTML(item.label)}</div>
+            <div class="shot-value">
+              ${iconMarkup}
+              <strong>${escapeHTML(item.value)}</strong>
+            </div>
+            <div class="shot-description">${escapeHTML(item.description)}</div>
+          </div>
+        `;
+      }).join("");
+
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="1120" viewBox="0 0 ${width} 1120">
+          <defs>
+            <linearGradient id="shot-bg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#111827" />
+              <stop offset="0.55" stop-color="#172033" />
+              <stop offset="1" stop-color="#0b1020" />
+            </linearGradient>
+          </defs>
+          <rect width="1200" height="1120" fill="url(#shot-bg)" />
+          <rect x="28" y="28" width="1144" height="1064" rx="26" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.16)" stroke-width="2" />
+          <foreignObject x="56" y="56" width="1088" height="1008">
+            <div xmlns="http://www.w3.org/1999/xhtml" class="shot">
+              <style>
+                .shot {
+                  width: 1088px;
+                  color: #f9fafb;
+                  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                }
+                .shot-logo {
+                  display: block;
+                  width: 312px;
+                  max-height: 84px;
+                  object-fit: contain;
+                  object-position: left center;
+                  margin: 0 0 28px;
+                }
+                .shot-seed {
+                  margin: 0 0 18px;
+                  color: #c1c8d4;
+                  font-size: 21px;
+                  line-height: 1.35;
+                }
+                .shot-title {
+                  margin: 0 0 30px;
+                  color: #fff;
+                  font-size: 34px;
+                  font-weight: 800;
+                  line-height: 1.2;
+                }
+                .shot-grid {
+                  display: grid;
+                  grid-template-columns: repeat(2, minmax(0, 1fr));
+                  gap: 22px;
+                }
+                .shot-item {
+                  min-height: 170px;
+                  padding: 24px;
+                  border: 2px solid rgba(255, 255, 255, 0.16);
+                  border-radius: 18px;
+                  background: rgba(17, 24, 39, 0.78);
+                  box-sizing: border-box;
+                }
+                .shot-label {
+                  margin-bottom: 14px;
+                  color: #c1c8d4;
+                  font-size: 17px;
+                  font-weight: 700;
+                  line-height: 1.15;
+                  text-transform: uppercase;
+                }
+                .shot-value {
+                  display: flex;
+                  align-items: center;
+                  gap: 14px;
+                  min-height: 42px;
+                  color: #fff;
+                  font-size: 28px;
+                  font-weight: 800;
+                  line-height: 1.2;
+                }
+                .shot-value strong {
+                  min-width: 0;
+                }
+                .item-icon {
+                  width: 42px;
+                  height: 42px;
+                  flex: 0 0 42px;
+                  object-fit: contain;
+                }
+                .shot-description {
+                  margin-top: 18px;
+                  color: #d1d5db;
+                  font-size: 20px;
+                  line-height: 1.4;
+                }
+                .shot-note {
+                  margin-top: 34px;
+                  color: #c1c8d4;
+                  font-size: 19px;
+                  line-height: 1.42;
+                }
+              </style>
+              <img class="shot-logo" src="${escapeHTML(assetUrl("assets/maker-jam.png"))}" alt="Maker Jam" />
+              <div class="shot-seed">Seed used: ${escapeHTML(currentAssignment.seedValue)}</div>
+              <div class="shot-title">Assigned course: ${escapeHTML(currentAssignment.theme)} ${escapeHTML(currentAssignment.styleName)}</div>
+              <div class="shot-grid">${details}</div>
+              <div class="shot-note">
+                Theme-gated picks are filtered so invalid combinations do not appear. If your theme has an impossible combination, contact LennyTheSniper on Twitter or Discord to get it fixed!
+              </div>
+            </div>
+          </foreignObject>
+        </svg>
+      `.trim();
+
+      return new Blob([svg], { type: "image/svg+xml" });
+    }
+
+    async function renderAssignmentCanvas() {
+      const scale = 2;
+      const width = 1200;
+      const padding = 56;
+      const gap = 22;
+      const cardWidth = (width - padding * 2 - gap) / 2;
+      const logoHeight = 84;
+      const itemPadding = 24;
+      const iconSize = 42;
+      const detailLayouts = [];
+      const scratch = document.createElement("canvas").getContext("2d");
+
+      scratch.font = "700 29px system-ui, sans-serif";
+      const headlineLines = wrapCanvasText(
+        scratch,
+        `Assigned course: ${currentAssignment.theme} ${currentAssignment.styleName}`,
+        width - padding * 2
+      );
+
+      scratch.font = "700 28px system-ui, sans-serif";
+      for (const item of currentAssignment.details) {
+        const textWidth = cardWidth - itemPadding * 2;
+        const valueWidth = textWidth - iconSize - 14;
+        const valueLines = wrapCanvasText(scratch, item.value, valueWidth);
+
+        scratch.font = "400 20px system-ui, sans-serif";
+        const descriptionLines = wrapCanvasText(scratch, item.description, textWidth);
+
+        const height = itemPadding * 2 + 18 + 14 + Math.max(iconSize, valueLines.length * 34) + 13 + descriptionLines.length * 28;
+        detailLayouts.push({ item, valueLines, descriptionLines, height: Math.max(170, height) });
+        scratch.font = "700 28px system-ui, sans-serif";
+      }
+
+      const rowHeights = [
+        Math.max(detailLayouts[0].height, detailLayouts[1].height),
+        Math.max(detailLayouts[2].height, detailLayouts[3].height),
+        Math.max(detailLayouts[4].height, detailLayouts[5].height)
+      ];
+      scratch.font = "400 19px system-ui, sans-serif";
+      const noteLines = wrapCanvasText(
+        scratch,
+        "Theme-gated picks are filtered so invalid combinations do not appear. If your theme has an impossible combination, contact LennyTheSniper on Twitter or Discord to get it fixed!",
+        width - padding * 2
+      );
+      const height = padding + logoHeight + 28 + 28 + headlineLines.length * 38 + 36 + rowHeights.reduce((sum, row) => sum + row, 0) + gap * 2 + 34 + noteLines.length * 27 + padding;
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width * scale;
+      canvas.height = height * scale;
+      const ctx = canvas.getContext("2d");
+      ctx.scale(scale, scale);
+
+      const gradient = ctx.createLinearGradient(0, 0, width, height);
+      gradient.addColorStop(0, "#111827");
+      gradient.addColorStop(0.55, "#172033");
+      gradient.addColorStop(1, "#0b1020");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.fillStyle = "rgba(255, 255, 255, 0.06)";
+      drawRoundedRect(ctx, 28, 28, width - 56, height - 56, 26);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.16)";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      const logo = await loadImage("assets/maker-jam.png");
+      let y = padding;
+      if (logo) {
+        const logoWidth = Math.min(312, logo.width * (logoHeight / logo.height));
+        ctx.drawImage(logo, padding, y, logoWidth, logoHeight);
+      }
+
+      y += logoHeight + 28;
+      ctx.fillStyle = "#c1c8d4";
+      ctx.font = "400 21px system-ui, sans-serif";
+      ctx.fillText(`Seed used: ${currentAssignment.seedValue}`, padding, y);
+
+      y += 36;
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "800 34px system-ui, sans-serif";
+      drawTextLines(ctx, headlineLines, padding, y, 38);
+      y += headlineLines.length * 38 + 30;
+
+      for (let row = 0; row < 3; row++) {
+        const rowY = y;
+        for (let col = 0; col < 2; col++) {
+          const layout = detailLayouts[row * 2 + col];
+          const x = padding + col * (cardWidth + gap);
+          const item = layout.item;
+
+          ctx.fillStyle = "rgba(17, 24, 39, 0.78)";
+          drawRoundedRect(ctx, x, rowY, cardWidth, rowHeights[row], 18);
+          ctx.fill();
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.16)";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          ctx.fillStyle = "#c1c8d4";
+          ctx.font = "700 17px system-ui, sans-serif";
+          ctx.fillText(item.label.toUpperCase(), x + itemPadding, rowY + itemPadding + 17);
+
+          const iconPath = ICON_PATHS[item.iconType]?.[item.iconKey];
+          const icon = await loadImage(iconPath);
+          const valueY = rowY + itemPadding + 56;
+          if (icon) {
+            ctx.drawImage(icon, x + itemPadding, valueY - 4, iconSize, iconSize);
+          }
+
+          ctx.fillStyle = "#ffffff";
+          ctx.font = "800 28px system-ui, sans-serif";
+          drawTextLines(ctx, layout.valueLines, x + itemPadding + iconSize + 14, valueY + 25, 34);
+
+          ctx.fillStyle = "#d1d5db";
+          ctx.font = "400 20px system-ui, sans-serif";
+          const descriptionY = valueY + Math.max(iconSize, layout.valueLines.length * 34) + 24;
+          drawTextLines(ctx, layout.descriptionLines, x + itemPadding, descriptionY, 28);
+        }
+        y += rowHeights[row] + gap;
+      }
+
+      ctx.fillStyle = "#c1c8d4";
+      ctx.font = "400 19px system-ui, sans-serif";
+      drawTextLines(ctx, noteLines, padding, y + 12, 27);
+
+      return canvas;
+    }
+
+    async function createAssignmentScreenshotBlob() {
+      try {
+        return {
+          blob: await canvasToBlob(await renderAssignmentCanvas()),
+          extension: "png"
+        };
+      } catch (error) {
+        console.warn("PNG screenshot failed, saving an SVG image with the original artwork instead.", error);
+        return {
+          blob: createSvgScreenshotBlob(),
+          extension: "svg"
+        };
+      }
+    }
+
+    async function saveAssignmentScreenshot() {
+      if (!currentAssignment) {
+        generateAssignment();
+      }
+
+      if (!currentAssignment) {
+        alert("Generate an assignment before saving a screenshot.");
+        return;
+      }
+
+      const screenshotBtn = document.getElementById("screenshotBtn");
+      const filename = `smm2-assignment-${slugify(currentAssignment.seedValue) || "seed"}.png`;
+      let fileHandle = null;
+
+      screenshotBtn.disabled = true;
+      screenshotBtn.textContent = "Choose location...";
+
+      try {
+        fileHandle = await requestSaveFileHandle(filename);
+      } catch (error) {
+        screenshotBtn.disabled = false;
+        screenshotBtn.textContent = "Save screenshot";
+        return;
+      }
+
+      screenshotBtn.textContent = "Preparing...";
+
+      try {
+        await document.fonts?.ready;
+
+        const result = await createAssignmentScreenshotBlob();
+        const outputFilename = result.extension === "png"
+          ? filename
+          : `smm2-assignment-${slugify(currentAssignment.seedValue) || "seed"}.svg`;
+
+        if (fileHandle && result.extension === "png") {
+          try {
+            await writeBlobToFileHandle(fileHandle, result.blob);
+            return;
+          } catch (error) {
+            console.warn("Could not write to picked file, using download fallback.", error);
+          }
+        }
+
+        downloadBlob(result.blob, outputFilename);
+      } catch (error) {
+        console.error("Screenshot failed.", error);
+        alert("The screenshot could not be saved. Please try again.");
+      } finally {
+        screenshotBtn.disabled = false;
+        screenshotBtn.textContent = "Save screenshot";
+      }
+    }
+
     function maybeClearCondition(styleName, rng) {
       const chance = styleName === "Speedrun" ? 1 / 3 : 1 / 2;
       return rng() < chance ? pick(CLEAR_CONDITIONS, rng) : null;
@@ -422,6 +866,8 @@
         document.getElementById("seedLine").textContent = "Enter a participant name, number, or code first.";
         document.getElementById("headline").textContent = "No assignment generated yet.";
         document.getElementById("details").innerHTML = "";
+        currentAssignment = null;
+        document.getElementById("screenshotBtn").disabled = true;
         return;
       }
 
@@ -520,6 +966,13 @@
         `Assigned course: <strong>${theme}</strong> <strong>${style.name}</strong>`;
 
       document.getElementById("details").innerHTML = details.map(renderDetailItem).join("");
+      currentAssignment = {
+        seedValue,
+        theme,
+        styleName: style.name,
+        details
+      };
+      document.getElementById("screenshotBtn").disabled = false;
     }
 
     // ------------------------------------------------------------
@@ -527,6 +980,7 @@
     // ------------------------------------------------------------
 
     document.getElementById("generateBtn").addEventListener("click", generateAssignment);
+    document.getElementById("screenshotBtn").addEventListener("click", saveAssignmentScreenshot);
 
     document.getElementById("seedInput").addEventListener("keydown", (e) => {
       if (e.key === "Enter") {

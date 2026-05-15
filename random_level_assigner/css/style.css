@@ -63,7 +63,7 @@ h1 {
 
 .controls {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr auto auto;
   gap: 12px;
   margin-bottom: 24px;
 }
@@ -86,7 +86,7 @@ h1 {
 
 .controls button {
   padding: 14px 18px;
-  border: 0;
+  border: 1px solid transparent;
   border-radius: 12px;
   background: linear-gradient(180deg, #60a5fa, #3b82f6);
   color: white;
@@ -97,12 +97,24 @@ h1 {
   white-space: nowrap;
 }
 
+.controls button.secondary-button {
+  border-color: var(--line);
+  background: rgba(17, 24, 39, 0.74);
+}
+
 .controls button:hover {
   filter: brightness(1.05);
 }
 
 .controls button:active {
   transform: translateY(1px);
+}
+
+.controls button:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.4);
+  opacity: 0.55;
+  transform: none;
 }
 
 .output {
