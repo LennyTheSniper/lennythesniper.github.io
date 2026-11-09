@@ -1,0 +1,92 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#151923">
+    <title>Number Hunter</title>
+    <link rel="stylesheet" href="./styles.css">
+    <script type="module" src="./src/main.js"></script>
+</head>
+<body>
+    <main class="page-shell">
+        <header class="page-header">
+            <p class="eyebrow">A number-hunting game</p>
+            <h1>Number Hunter</h1>
+            <p class="subtitle">Roll, evaluate, upgrade, and keep searching for 1.</p>
+        </header>
+
+        <section class="stats-grid" aria-label="Your current progress">
+            <article class="stat-card">
+                <span class="stat-label">Evaluation points</span>
+                <strong id="ep-value">0 EP</strong>
+            </article>
+            <article class="stat-card">
+                <span class="stat-label">Total rolls</span>
+                <strong id="rolls-value">0</strong>
+            </article>
+            <article class="stat-card">
+                <span class="stat-label">Maximum number</span>
+                <strong id="max-value">1,000,000</strong>
+            </article>
+            <article class="stat-card">
+                <span class="stat-label">Numbers per click</span>
+                <strong id="batch-value">1</strong>
+            </article>
+        </section>
+
+        <section class="panel roll-panel" aria-labelledby="roll-heading">
+            <div>
+                <p class="eyebrow">Your next attempt</p>
+                <h2 id="roll-heading">Ready to roll?</h2>
+            </div>
+
+            <div id="last-number" class="number-display" aria-live="polite">?</div>
+            <p id="roll-summary" class="roll-summary">Your first number is waiting.</p>
+            <button id="roll-button" class="primary-button" type="button">ROLL</button>
+            <p class="fine-print">Numbers are generated from 0 to your current maximum, inclusive.</p>
+        </section>
+
+        <!-- Shop now appears before the recent rolls log. -->
+        <section class="panel" aria-labelledby="upgrades-heading">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Spend your EP</p>
+                    <h2 id="upgrades-heading">Upgrades</h2>
+                </div>
+            </div>
+            <div id="upgrades-list" class="upgrades-list"></div>
+        </section>
+
+        <section class="panel" aria-labelledby="recent-heading">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Latest attempts</p>
+                    <h2 id="recent-heading">Recent rolls</h2>
+                </div>
+            </div>
+            <ol id="recent-rolls" class="recent-rolls">
+                <li class="empty-state">Your rolls will appear here.</li>
+            </ol>
+        </section>
+
+        <p id="game-message" class="game-message" role="status" aria-live="polite">
+            Your progress is saved in this browser.
+        </p>
+
+        <section class="reset-section" aria-label="Reset game">
+            <button id="reset-button" class="danger-button" type="button">
+                RESET GAME
+            </button>
+            <p class="fine-print">
+                This permanently deletes your current game progress.
+            </p>
+        </section>
+
+        <footer class="page-footer">
+            Single-player · Manual rolls only · No offline production
+        </footer>
+    </main>
+</body>
+</html>

@@ -1,0 +1,365 @@
+:root {
+    color-scheme: dark;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #10141c;
+    color: #f1f4fa;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    --surface: #191f2b;
+    --surface-soft: #202838;
+    --border: #303b4e;
+    --muted: #a2aec1;
+    --accent: #83a7ff;
+    --accent-strong: #527eea;
+    --success: #79d6a3;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    min-width: 320px;
+    min-height: 100vh;
+    margin: 0;
+    padding: 36px 18px 48px;
+    background:
+        radial-gradient(ellipse at top, rgba(82, 126, 234, 0.13), transparent 45%),
+        #10141c;
+}
+
+button {
+    font: inherit;
+}
+
+.page-shell {
+    width: min(900px, 100%);
+    margin: 0 auto;
+}
+
+.page-header {
+    margin-bottom: 28px;
+    text-align: center;
+}
+
+.eyebrow {
+    margin: 0 0 8px;
+    color: var(--accent);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+}
+
+h1, h2, p {
+    margin-top: 0;
+}
+
+h1 {
+    margin-bottom: 8px;
+    font-size: clamp(2.2rem, 7vw, 3.6rem);
+    letter-spacing: -0.055em;
+}
+
+h2 {
+    margin-bottom: 0;
+    font-size: 1.25rem;
+}
+
+.subtitle,
+.fine-print,
+.page-footer {
+    color: var(--muted);
+}
+
+.subtitle {
+    margin-bottom: 0;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.stat-card,
+.panel {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--surface);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+}
+
+.stat-card {
+    min-width: 0;
+    padding: 16px;
+}
+
+.stat-label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--muted);
+    font-size: 0.78rem;
+}
+
+.stat-card strong {
+    display: block;
+    overflow-wrap: anywhere;
+    font-size: clamp(1rem, 3vw, 1.35rem);
+    font-variant-numeric: tabular-nums;
+}
+
+.panel {
+    margin-bottom: 16px;
+    padding: 22px;
+}
+
+.roll-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.roll-panel > div:first-child {
+    margin-bottom: 12px;
+}
+
+
+/* Simultaneous multi-roll display */
+.number-display {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+    align-items: center;
+    justify-items: center;
+    gap: 12px;
+    padding: 20px;
+    overflow: visible;
+}
+
+.number-chip {
+    display: inline-block;
+    max-width: 100%;
+    white-space: nowrap;
+    text-align: center;
+    font-size: clamp(1.4rem, 5vw, 3rem);
+    font-weight: 850;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Big red reset button */
+.reset-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin: 36px 0 20px;
+}
+
+.danger-button {
+    width: min(100%, 360px);
+    min-height: 64px;
+    padding: 16px 28px;
+    border: 2px solid #ff7777;
+    border-radius: 12px;
+    background: #c62828;
+    color: #ffffff;
+    font-size: 1.15rem;
+    font-weight: 850;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition:
+        background 150ms ease,
+        transform 150ms ease,
+        opacity 150ms ease;
+}
+
+.danger-button:hover:not(:disabled) {
+    background: #e53935;
+    transform: translateY(-2px);
+}
+
+.danger-button:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.danger-button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.number-display.reveal {
+    animation: reveal 260ms ease-out;
+}
+
+@keyframes reveal {
+    from { transform: scale(0.96); opacity: 0.55; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.roll-summary {
+    min-height: 24px;
+    margin-bottom: 18px;
+    color: var(--muted);
+}
+
+.primary-button,
+.upgrade-button {
+    border: 0;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 800;
+    transition: transform 120ms ease, background 120ms ease, opacity 120ms ease;
+}
+
+.primary-button {
+    width: min(100%, 280px);
+    min-height: 58px;
+    background: var(--accent-strong);
+    color: white;
+    font-size: 1.08rem;
+    letter-spacing: 0.08em;
+}
+
+.primary-button:hover:not(:disabled),
+.upgrade-button:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.primary-button:hover:not(:disabled) {
+    background: #6790f5;
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.fine-print {
+    margin: 14px 0 0;
+    font-size: 0.78rem;
+}
+
+.section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.recent-rolls {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.recent-roll-item,
+.empty-state {
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface-soft);
+}
+
+.recent-roll-item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.recent-roll-number {
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+}
+
+.recent-roll-detail {
+    color: var(--muted);
+    font-size: 0.82rem;
+    text-align: right;
+}
+
+.empty-state {
+    color: var(--muted);
+    text-align: center;
+}
+
+.upgrades-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.upgrade-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-soft);
+}
+
+.upgrade-card h3 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.upgrade-card p {
+    min-height: 40px;
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.84rem;
+    line-height: 1.45;
+}
+
+.upgrade-meta {
+    color: var(--muted);
+    font-size: 0.78rem;
+}
+
+.upgrade-button {
+    width: 100%;
+    min-height: 40px;
+    margin-top: auto;
+    padding: 9px 12px;
+    background: #344664;
+    color: white;
+}
+
+.upgrade-button:hover:not(:disabled) {
+    background: #415a83;
+}
+
+.game-message {
+    min-height: 24px;
+    margin: 18px 0 8px;
+    color: var(--success);
+    text-align: center;
+}
+
+.page-footer {
+    margin: 0;
+    font-size: 0.78rem;
+    text-align: center;
+}
+
+@media (max-width: 650px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .upgrades-list {
+        grid-template-columns: 1fr;
+    }
+
+    .panel {
+        padding: 18px;
+    }
+}
