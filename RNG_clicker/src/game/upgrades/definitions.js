@@ -4,15 +4,15 @@ export const UPGRADE_DEFINITIONS = {
         id: "multiRoll",
         name: "Multi-roll",
         description: "Roll one additional number each time you press the main button.",
-        baseCost: 25,
-        costMultiplier: 1.8,
-        maxLevel: 10
+        baseCost: 50_000,
+        costMultiplier: 4,
+        maxLevel: 19
     },
     rangeReduction: {
         id: "rangeReduction",
         name: "Number compression",
         description: "Reduce the maximum possible roll by 10% per purchase, up to 40 levels.",
-        baseCost: 100,
+        baseCost: 100_000,
         costMultiplier: 1.65,
         maxLevel: 40
     }

@@ -39,17 +39,11 @@ export function renderGame(
     const numberDisplay = document.getElementById("last-number");
     numberDisplay.replaceChildren();
 
-    let numbersToShow;
-
-    if (displayedNumbers !== undefined) {
-        numbersToShow = Array.isArray(displayedNumbers)
-            ? displayedNumbers
-            : [displayedNumbers];
-    } else {
-        numbersToShow = game.lastNumber === null
+    const numbersToShow = Array.isArray(displayedNumbers)
+        ? displayedNumbers
+        : game.lastNumber === null
             ? []
             : [formatNumber(game.lastNumber)];
-    }
 
     if (numbersToShow.length === 0) {
         numberDisplay.textContent = "?";
@@ -89,9 +83,12 @@ export function renderGame(
             const detail = document.createElement("span");
             detail.className = "recent-roll-detail";
 
-            const ruleNames = result.rules.map(
-                (rule) => rule.name
-            ).join(", ");
+            const topRules = [...result.rules]
+                .sort((a, b) => b.ep - a.ep)
+                .slice(0, 5);
+            const remainingRules = result.rules.length - topRules.length;
+            const ruleNames = topRules.map((rule) => rule.name).join(", ") +
+                (remainingRules > 0 ? ` (and ${remainingRules} more...)` : "");
 
             detail.textContent =
                 `+${formatNumber(result.ep)} EP` +

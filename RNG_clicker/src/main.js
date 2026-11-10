@@ -10,6 +10,7 @@ import { renderGame } from "./ui/render.js";
 const { game, warning } = loadGame();
 
 let recentRolls = [];
+let lastDisplayedBatch = [];
 let isRolling = false;
 let message = warning ?? "Your progress is saved in this browser.";
 
@@ -25,14 +26,18 @@ function persistGame() {
     }
 }
 
-function render(isCurrentlyRolling = false, displayedNumbers = undefined) {
+function render(isCurrentlyRolling = false, displayedNumbers = null) {
+    const numbersToDisplay = displayedNumbers !== null
+        ? displayedNumbers
+        : lastDisplayedBatch;
+
     renderGame(
         game,
         recentRolls,
         message,
         handleBuyUpgrade,
         isCurrentlyRolling,
-        displayedNumbers
+        numbersToDisplay
     );
 }
 
@@ -112,6 +117,10 @@ async function handleRoll() {
             ...batch
         ].slice(-20);
 
+        lastDisplayedBatch = batch.map((result) =>
+            result.number.toLocaleString()
+        );
+
         const foundOne = batch.some(
             (result) => result.number === 1
         );
@@ -130,9 +139,7 @@ async function handleRoll() {
         persistGame();
 
         // Show the complete batch and its reward.
-        render(true, batch.map((result) =>
-            result.number.toLocaleString()
-        ));
+        render(true, lastDisplayedBatch);
 
         await delay(1000);
 
@@ -174,8 +181,9 @@ function handleReset() {
     // Restore every game property to its starting value.
     Object.assign(game, createDefaultGameState());
 
-    // Clear the session's recent roll history.
+    // Clear the session's recent roll history and displayed batch.
     recentRolls = [];
+    lastDisplayedBatch = [];
 
     message = "Game successfully reset. Good luck finding 1!";
 
