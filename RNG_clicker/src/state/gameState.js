@@ -13,7 +13,9 @@ export function createDefaultGameState() {
         maxNumber: STARTING_MAX_NUMBER,
         upgrades: {
             multiRoll: 0,
-            rangeReduction: 0
+            rangeReduction: 0,
+            animationSpeed: 0,
+            epMultiplier: 0
         },
         lastNumber: null,
         gameWon: false
@@ -49,6 +51,12 @@ export function normalizeGameState(savedData) {
                 : 0,
             rangeReduction: Number.isSafeInteger(Number(upgrades.rangeReduction))
                 ? Math.min(40, Math.max(0, Number(upgrades.rangeReduction)))
+                : 0,
+            animationSpeed: Number.isSafeInteger(Number(upgrades.animationSpeed))
+                ? Math.min(20, Math.max(0, Number(upgrades.animationSpeed)))
+                : 0,
+            epMultiplier: Number.isSafeInteger(Number(upgrades.epMultiplier))
+                ? Math.min(20, Math.max(0, Number(upgrades.epMultiplier)))
                 : 0
         },
         lastNumber: Number.isSafeInteger(lastNumber) && lastNumber >= 0

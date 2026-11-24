@@ -25,44 +25,107 @@ const relaxedPeak = (ds, invert = false) => {
         s.slice(0, peak).some(v => v === 1) && s.slice(peak).some(v => v === -1);
 };
 const isEquation = s => {
-    const evaluateSide = (digits, ops) => {
-        let sum = 0, term = Number(digits[0]), sign = 1;
-        for (let i=0;i<ops.length;i++) {
-            const value=Number(digits[i+1]), op=ops[i];
-            if(op==="*") term*=value;
-            else if(op==="/") { if(value===0)return NaN; term/=value; }
-            else { sum+=sign*term; term=value; sign=op==="+"?1:-1; }
+    if(s.length<4)return false;
+    for(let equalAt=0;equalAt<s.length-1;equalAt++)for(let operatorAt=0;operatorAt<s.length-1;operatorAt++){
+        if(operatorAt===equalAt)continue;
+        let left,right;
+        if(operatorAt<equalAt){left=[s.slice(0,operatorAt+1),s.slice(operatorAt+1,equalAt+1)];right=[s.slice(equalAt+1)];}
+        else{left=[s.slice(0,equalAt+1)];right=[s.slice(equalAt+1,operatorAt+1),s.slice(operatorAt+1)];}
+        const a=Number(left.join("")),b=Number(right[0]),c=right.length===2?Number(right[1]):null;
+        if(!Number.isFinite(a)||!Number.isFinite(b)||(c!==null&&!Number.isFinite(c)))continue;
+        for(const operator of ["+","-","*","/"]){
+            let lhs,rhs;
+            if(left.length===2){const [x,y]=left.map(Number);if(operator==="+")lhs=x+y;else if(operator==="-")lhs=x-y;else if(operator==="*")lhs=x*y;else lhs=y===0?NaN:x/y;rhs=Number(right[0]);}
+            else{lhs=Number(left[0]);if(operator==="+")rhs=b+c;else if(operator==="-")rhs=b-c;else if(operator==="*")rhs=b*c;else rhs=c===0?NaN:b/c;}
+            if(Number.isFinite(lhs)&&Number.isFinite(rhs)&&Math.abs(lhs-rhs)<1e-10)return true;
         }
-        return sum+sign*term;
-    };
-    const choices=["+","-","*","/"];
-    for(let equalAt=0;equalAt<s.length-1;equalAt++) {
-        const ops=Array(s.length-1).fill("=");
-        const assign=(i)=>{
-            if(i===ops.length) {
-                const lhs=evaluateSide(s.slice(0,equalAt+1),ops.slice(0,equalAt));
-                const rhs=evaluateSide(s.slice(equalAt+1),ops.slice(equalAt+1));
-                return Number.isFinite(lhs)&&Number.isFinite(rhs)&&Math.abs(lhs-rhs)<1e-10;
-            }
-            if(i===equalAt)return assign(i+1);
-            for(const op of choices){ops[i]=op;if(assign(i+1))return true;}
-            return false;
-        };
-        if(assign(0))return true;
     }
     return false;
 };
-const hasConsecutivePair = (s, nearby) => {
+const hasConsecutivePair = (s, nearby, containsOnly = false) => {
     for(let firstStart=0;firstStart<s.length;firstStart++) {
         for(let firstEnd=firstStart+1;firstEnd<=s.length;firstEnd++) {
             const first=s.slice(firstStart,firstEnd);
             if(first.length>1&&first[0]==="0")continue;
             const secondStart=firstEnd+(nearby?1:0);
             for(let secondEnd=secondStart+1;secondEnd<=s.length;secondEnd++) {
+                if(containsOnly&&firstStart===0&&secondEnd===s.length)continue;
                 const second=s.slice(secondStart,secondEnd);
                 if(second.length>1&&second[0]==="0")continue;
                 if((first.length>1||second.length>1)&&Math.abs(Number(first)-Number(second))===1)return true;
             }
+        }
+    }
+    return false;
+};
+const validIntegerChunk = chunk => !(chunk.length>1&&chunk[0]==="0") && Number.isSafeInteger(Number(chunk));
+const consecutiveValues = (chunks, scrambled = false) => {
+    if(chunks.length<2||!chunks.some(chunk=>chunk.length>=2)||!chunks.every(validIntegerChunk))return false;
+    const values=chunks.map(Number);
+    if(scrambled){const sorted=[...values].sort((a,b)=>a-b);return sorted.every((v,i)=>i===0||v===sorted[i-1]+1);}
+    const ascending=values.every((v,i)=>i===0||v===values[i-1]+1);
+    const descending=values.every((v,i)=>i===0||v===values[i-1]-1);
+    return ascending||descending;
+};
+const getPartitions = (s, count) => {
+    const result=[];
+    const visit=(at,chunks)=>{
+        if(chunks.length===count){if(at===s.length)result.push(chunks);return;}
+        for(let end=at+1;end<=s.length-(count-chunks.length-1);end++)visit(end,[...chunks,s.slice(at,end)]);
+    };
+    visit(0,[]);
+    return result;
+};
+const chunksFormRun = chunks => {
+    if(chunks.some(chunk=>!validIntegerChunk(chunk)))return false;
+    const values=chunks.map(Number).sort((a,b)=>a-b);
+    return values.every((value,index)=>index===0||value===values[index-1]+1);
+};
+const hasScrambleWithin = (s,minChunks,maxChunks,allowGaps) => {
+    if(!allowGaps){
+        for(let count=minChunks;count<=Math.min(maxChunks,s.length);count++)
+            if(getPartitions(s,count).some(chunks=>chunksFormRun(chunks)))return true;
+        return false;
+    }
+    const search=(at,chunks)=>{
+        if(chunks.length>=minChunks&&chunksFormRun(chunks))return true;
+        if(chunks.length===maxChunks)return false;
+        for(let start=at;start<s.length;start++)for(let end=start+1;end<=s.length;end++){
+            const chunk=s.slice(start,end);
+            if(validIntegerChunk(chunk)&&search(end,[...chunks,chunk]))return true;
+        }
+        return false;
+    };
+    return search(0,[]);
+};
+const hasConsecutiveSequence = (s,count,mode) => {
+    if(mode==="exact")return getPartitions(s,count).some(chunks=>consecutiveValues(chunks));
+    for(let start=0;start<s.length;start++)for(let end=start+count;end<=s.length;end++){
+        if(mode==="contains"&&end-start===s.length)continue;
+        const segment=s.slice(start,end);
+        if(getPartitions(segment,count).some(chunks=>consecutiveValues(chunks,mode==="scrambled")))return true;
+    }
+    return false;
+};
+const hasGeometricChunkSequence = s => {
+    for(let start=0;start<s.length;start++)for(let end=start+3;end<=s.length;end++){
+        const segment=s.slice(start,end);
+        for(let count=3;count<=segment.length;count++)for(const chunks of getPartitions(segment,count)){
+            if(!chunks.every(validIntegerChunk))continue;
+            const values=chunks.map(Number);
+            if(values.some(v=>v<=0))continue;
+            if(values[1]<=values[0])continue;
+            if(values.slice(2).every((v,i)=>v*values[0]===values[i+1]*values[i+1]))return true;
+        }
+    }
+    return false;
+};
+const hasNearbyConsecutivePair = s => {
+    for(let aStart=0;aStart<s.length;aStart++)for(let aEnd=aStart+1;aEnd<s.length;aEnd++){
+        const a=s.slice(aStart,aEnd);if(!validIntegerChunk(a))continue;
+        for(let bStart=aEnd+1;bStart<s.length;bStart++)for(let bEnd=bStart+1;bEnd<=s.length;bEnd++){
+            const b=s.slice(bStart,bEnd);
+            if(validIntegerChunk(b)&&(a.length>=2||b.length>=2)&&Math.abs(Number(a)-Number(b))===1)return true;
         }
     }
     return false;
@@ -79,6 +142,20 @@ const EP = {
     "sequence-three":1716, "consecutive-contains":1659, "consecutive-nearby":1575, mesa:1568, prime:1274, trinity:1265,
     dozen:1200, canyon:1184, "five-digits":1111, eleven:1100, harshad:1048, clean:1000, "semi-clean":1000,
     equilibrium:1000, sandwich:1000,
+    "exact-number":100000100, "exact-boob":50000050, "funny-number":50000050, always:50000050,
+    "golden-ratio":33333367, tau:33333367, "13th-power":33333367, "17th-power":33333367, "19th-power":33333367,
+    pi:25000025, "eulers-number":25000025, "10th-power":25000025, "11th-power":25000025,
+    "9th-power":20000020, "8th-power":16666683, ouroboros:14285729, "7th-power":12500013,
+    "power-of-seven":12500013, "power-of-five":11111122, factorial:11111122, hello:11111122,
+    "sequence-six":11111122, "contiguous-sixes":10000010, "deep-void-5":10000010,
+    eon:10000010, "semi-eon":10000010, "quint-nine":10000010, "single-digit":10000010,
+    "6th-power":9090918, "power-of-three":7692315, "5th-power":6250006, "power-of-two":5000005,
+    "jackpot-five":5263163, "e-slice-5":5000005, "pi-slice-5":5000005, "tau-slice-5":5000005,
+    "royal-flush":5000005, "58008":5000005, cascade:3333337, fibonacci:3333337,
+    "4th-power":3125003, waterfall:2857146, homogeneous:2222224, "funny-numbers":1666668,
+    "binary-soul":1538463, "straight-flush":1449277, "two-digits":1111112, "spy-number":1030929,
+    epoch:1000001, "semi-epoch":1000001, "quad-nine":1000001,
+    "four-consecutive-exact":25000025, "four-consecutive-contains":2631582, "four-consecutive-scrambled":2272730,
     "2nd-power":99900, "even-spacing-absolute":90992, firefly:82237,
     "two-consecutive-numbers":50505, palindrome:50025, "contiguous-quads":37023,
     "deep-void-3":37023, turtle:36049, "secret-agent":34614, heavy:33300,
@@ -95,7 +172,7 @@ const EP = {
     "deeper-meaning":334448, "6767":334448, leet:333334, hell:333334, "8008":333334,
     "big-brother":333334, "pi-slice-4":333334, "e-slice-4":333334, "tau-slice-4":333334,
     "three-consecutive-scrambled":277778, zipper:246914, ascension:219298,
-    crescendo:208334, "five-of-a-kind":198020, "three-consecutive-contains":157978,
+    crescendo:5099, "five-of-a-kind":198020, "three-consecutive-contains":157978,
     "contiguous-three-pair":154321, "framed-pair":137174, "framed-triple":137174,
     "framed-quad":137174, decay:119474, "three-digits":111111, echo:100100,
     millennium:100000, pronic:100000, "triple-nine":100000, "semi-millennium":100000,
@@ -161,7 +238,7 @@ export const hillsRule = rule("hills", "Hills", EP["hills"], "Digits strictly al
 export const threeKindRule = rule("three-of-a-kind", "Three of a Kind", EP["three-of-a-kind"], "Exactly three of one digit.", n => hasCount(n, [...countsOf(digitsOf(n))].find(([, c]) => c === 3)?.[0], 3));
 export const luckySevenDivisibleRule = rule("lucky-seven-divisible", "Lucky Seven (Divisible)", EP["lucky-seven-divisible"], "Divisible by 7.", n => n % 7 === 0);
 export const heterogeneousRule = rule("heterogeneous", "Heterogeneous", EP["heterogeneous"], "No repeated digits.", n => countsOf(digitsOf(n)).size === digitsOf(n).length);
-export const miniScrambleRule = rule("mini-scramble", "Mini Scramble", EP["mini-scramble"], "At least three digits form a consecutive run when sorted.", n => { const d=digitsOf(n).sort((a,b)=>a-b);return d.some((v,i)=>i+2<d.length&&d[i+1]===v+1&&d[i+2]===v+2); });
+export const miniScrambleRule = rule("mini-scramble", "Mini Scramble", EP["mini-scramble"], "Contains 3 to 5 non-overlapping number chunks which form a consecutive run when sorted.", n => hasScrambleWithin(textOf(n),3,5,true));
 export const gapOneRule = rule("gap-one", "Gap One", EP["gap-one"], "First and last digits differ by exactly 1.", n => Math.abs(digitsOf(n)[0]-digitsOf(n).at(-1))===1);
 export const twoPairRule = rule("two-pair", "Two Pair", EP["two-pair"], "Two digits each appear at least twice.", n => [...countsOf(digitsOf(n)).values()].filter(c=>c>=2).length>=2);
 export const dunesRule = rule("dunes", "Dunes", EP["dunes"], "Ignoring flats, non-flat slopes alternate direction.", n => { const s=slopes(digitsOf(n)).filter(Boolean); return s.length>=1 && s.every((v,i)=>i===0||v!==s[i-1]); });
@@ -178,7 +255,7 @@ export const pairRule = rule("pair", "Pair", EP["pair"], "Any digit appears at l
 export const sixDigitsRule = rule("six-digits", "Six Digits", EP["six-digits"], "A full six-digit roll.", n=>textOf(n).length===6);
 
 export const fourKindRule = rule("four-of-a-kind", "Four of a Kind", EP["four-of-a-kind"], "Four identical digits anywhere.", n=>[...countsOf(digitsOf(n)).values()].some(c=>c>=4));
-export const equationRule = rule("equation", "Equation", EP["equation"], "Inserting +, −, ×, ÷ and = between digits forms a true equation using operator precedence.", n => isEquation(textOf(n)));
+export const equationRule = rule("equation", "Equation", EP["equation"], "One +, −, ×, or ÷ and one = between digits form a true equation.", n => isEquation(textOf(n)));
 export const lowBallRule = rule("low-ball", "Low Ball", EP["low-ball"], "Every digit is 0–4.", n=>digitsOf(n).every(d=>d<=4));
 export const mountainRule = rule("mountain", "Mountain", EP["mountain"], "Digits climb to a peak, then descend.", n=>strictPeak(digitsOf(n)));
 export const doubleHopRule = rule("double-hop", "Double Hop", EP["double-hop"], "Contains a pattern such as 1x1x1, where x is any digit.", n=>{const d=digitsOf(n);return d.some((v,i)=>i+4<d.length&&d[i+2]===v&&d[i+4]===v);});
@@ -202,8 +279,8 @@ export const eightySixRule = rule("eighty-six", "Eighty-Six", EP["eighty-six"], 
 export const balancedRule = rule("balanced", "Balanced", EP["balanced"], "First half digits sum equals second half (even length).", n=>{const d=digitsOf(n);if(d.length%2)return false;const h=d.length/2;return d.slice(0,h).reduce((a,b)=>a+b,0)===d.slice(h).reduce((a,b)=>a+b,0);});
 export const rhymeRule = rule("rhyme", "Rhyme", EP["rhyme"], "The same 2+ digit substring occurs twice without overlap.", n=>{const s=textOf(n);for(let l=2;l<=s.length/2;l++)for(let i=0;i+l<=s.length;i++)if(s.indexOf(s.slice(i,i+l),i+l)>=0)return true;return false;});
 export const sequenceThreeRule = rule("sequence-three", "Sequence (3)", EP["sequence-three"], "Three consecutive digits in a row.", n=>hasRun(digitsOf(n)));
-export const consecutiveContainsRule = rule("consecutive-contains", "2 Consecutive Numbers (Contains)", EP["consecutive-contains"], "Contains adjacent consecutive integers, with at least one chunk containing two or more digits.", n=>hasConsecutivePair(textOf(n),false));
-export const consecutiveNearbyRule = rule("consecutive-nearby", "2 Consecutive Numbers (Nearby)", EP["consecutive-nearby"], "Contains consecutive integers separated by at least one digit, with at least one chunk containing two or more digits.", n=>hasConsecutivePair(textOf(n),true));
+export const consecutiveContainsRule = rule("consecutive-contains", "2 Consecutive Numbers (Contains)", EP["consecutive-contains"], "Contains adjacent consecutive integers within a larger number, with at least one chunk containing two or more digits.", n=>hasConsecutivePair(textOf(n),false,true));
+export const consecutiveNearbyRule = rule("consecutive-nearby", "2 Consecutive Numbers (Nearby)", EP["consecutive-nearby"], "Contains consecutive integers separated by at least one digit, with at least one chunk containing two or more digits.", n=>hasNearbyConsecutivePair(textOf(n)));
 export const mesaRule = rule("mesa", "Mesa", EP["mesa"], "Rise to a peak then fall; flat stretches allowed.", n=>relaxedPeak(digitsOf(n)));
 export const dozenRule = rule("dozen", "Dozen", EP["dozen"], "Divisible by 12.", n=>n%12===0);
 export const canyonRule = rule("canyon", "Canyon", EP["canyon"], "Fall to a floor then rise; flat stretches allowed.", n=>relaxedPeak(digitsOf(n),true));
@@ -220,7 +297,7 @@ const rareRules = [
     rule("2nd-power", "2nd Power", EP["2nd-power"], "A perfect square.", n => Number.isInteger(Math.sqrt(n))),
     rule("even-spacing-absolute", "Even Spacing (Absolute)", EP["even-spacing-absolute"], "Digits have equal absolute spacing.", n => hasEqualAbsoluteSpacing(digitsOf(n))),
     rule("firefly", "Firefly", EP.firefly, "One unique digit among identical others (4+ digits).", n => { const d=digitsOf(n), c=[...countsOf(d).values()].sort((a,b)=>a-b);return d.length>=4&&c.length===2&&c[0]===1&&c[1]===d.length-1; }),
-    rule("two-consecutive-numbers", "2 Consecutive Numbers", EP["two-consecutive-numbers"], "Splits into two consecutive integers.", n => allSplits(textOf(n),2,2).some(([a,b])=>Math.abs(a-b)===1)),
+    rule("two-consecutive-numbers", "2 Consecutive Numbers", EP["two-consecutive-numbers"], "The entire number splits into exactly two consecutive integers, with at least one chunk having two or more digits.", n => hasConsecutiveSequence(textOf(n),2,"exact")),
     rule("contiguous-quads", "Contiguous Quads", EP["contiguous-quads"], "Four identical digits in a row.", n => /(\d)\1\1\1/.test(textOf(n))),
     rule("deep-void-3", "Deep Void (3)", EP["deep-void-3"], "Contains 000.", n => hasSubstring(n,"000")),
     rule("turtle", "Turtle", EP.turtle, "Neighbouring digits differ by at most 1.", n => digitsOf(n).slice(1).every((d,i,a)=>Math.abs(d-digitsOf(n)[i])<=1)),
@@ -238,7 +315,7 @@ const rareRules = [
     rule("e-slice-3", "E Slice (3)", EP["e-slice-3"], "Contains 271.", n => hasSubstring(n,"271")),
     rule("calendar", "Calendar", EP.calendar, "Contains 365.", n => hasSubstring(n,"365")),
     rule("divisible-by-three", "Divisible by Three", EP["divisible-by-three"], "Every digit is 0, 3, 6 or 9.", n => digitsOf(n).every(d=>d%3===0)),
-    rule("scramble", "Scramble", EP.scramble, "All digits form a consecutive run when sorted.", n => {const d=digitsOf(n).sort((a,b)=>a-b);return d.every((v,i)=>i===0||v===d[i-1]+1);}),
+    rule("scramble", "Scramble", EP.scramble, "The entire number splits into at least three consecutive integer chunks, with no leftover digits.", n => hasScrambleWithin(textOf(n),3,textOf(n).length,false)),
     rule("duality", "Duality", EP.duality, "Exactly two different digits.", n => countsOf(digitsOf(n)).size===2),
     rule("steps", "Steps", EP.steps, "Digits never decrease.", n => digitsOf(n).every((d,i,a)=>i===0||d>=a[i-1])),
     rule("metronome", "Metronome", EP.metronome, "Splits into 3+ parts with a constant difference (at least 2).", n => allSplits(textOf(n),3).some(p=>{const dif=p[1]-p[0];return Math.abs(dif)>=2&&p.slice(2).every((v,i)=>v-p[i+1]===dif);})),
@@ -260,7 +337,7 @@ const rareRules = [
 const epicRules = [
     rule("3rd-power", "3rd Power", EP["3rd-power"], "A perfect cube.", n => isCube(n)),
     rule("even-spacing", "Even Spacing", EP["even-spacing"], "Digits form an arithmetic sequence.", n => {const d=digitsOf(n);return d.length>=3&&d.slice(2).every((v,i)=>v-d[i+1]===d[1]-d[0]);}),
-    rule("three-consecutive-numbers", "3 Consecutive Numbers", EP["three-consecutive-numbers"], "Splits into three consecutive integers, in order.", n => hasConsecutiveChunks(textOf(n),3,true)),
+    rule("three-consecutive-numbers", "3 Consecutive Numbers", EP["three-consecutive-numbers"], "The entire number splits into exactly three consecutive integers, in order.", n => hasConsecutiveSequence(textOf(n),3,"exact")),
     rule("contiguous-fives", "Contiguous Fives", EP["contiguous-fives"], "Five identical digits in a row.", n => /(\d)\1\1\1\1/.test(textOf(n))),
     rule("deep-void-4", "Deep Void (4)", EP["deep-void-4"], "Contains 0000.", n => hasSubstring(n,"0000")),
     rule("strobogrammatic", "Strobogrammatic", EP.strobogrammatic, "Looks the same rotated 180 degrees.", n => {const map={0:"0",1:"1",6:"9",8:"8",9:"6"};return [...textOf(n)].every((d,i,a)=>map[d]===a[a.length-1-i]);}),
@@ -276,12 +353,12 @@ const epicRules = [
     rule("pi-slice-4", "Pi Slice (4)", EP["pi-slice-4"], "Contains 3141.", n => hasSubstring(n,"3141")),
     rule("e-slice-4", "E Slice (4)", EP["e-slice-4"], "Contains 2718.", n => hasSubstring(n,"2718")),
     rule("tau-slice-4", "Tau Slice (4)", EP["tau-slice-4"], "Contains 6283.", n => hasSubstring(n,"6283")),
-    rule("three-consecutive-scrambled", "3 Consecutive Numbers (Scrambled)", EP["three-consecutive-scrambled"], "Splits into three consecutive integers, out of order.", n => allSplits(textOf(n),3,3).some(p=>new Set(p).size===3&&p.every(v=>p.includes(v+1)||p.includes(v-1))&&Math.max(...p)-Math.min(...p)===2)),
+    rule("three-consecutive-scrambled", "3 Consecutive Numbers (Scrambled)", EP["three-consecutive-scrambled"], "Contains three consecutive integers as adjacent chunks, in any order.", n => hasConsecutiveSequence(textOf(n),3,"scrambled")),
     rule("zipper", "Zipper", EP.zipper, "Two digits alternating perfectly.", n => {const d=digitsOf(n);return d.length>=4&&d[0]===d[2]&&d[1]===d[3]&&d[0]!==d[1]&&d.every((v,i)=>i<2||v===d[i%2]);}),
     rule("ascension", "Ascension", EP.ascension, "Every digit strictly larger than the previous.", n => digitsOf(n).every((d,i,a)=>i===0||d>a[i-1])),
-    rule("crescendo", "Crescendo", EP.crescendo, "Splits into three or more parts with a constant ratio.", n => allSplits(textOf(n),3).some(p=>p[0]!==0&&p.slice(2).every((v,i)=>v*p[i]===p[i+1]*p[i+1]))),
+    rule("crescendo", "Crescendo", EP.crescendo, "Contains at least three consecutive integer chunks forming an increasing geometric sequence.", n => hasGeometricChunkSequence(textOf(n))),
     rule("five-of-a-kind", "Five of a Kind", EP["five-of-a-kind"], "Five identical digits anywhere.", n => [...countsOf(digitsOf(n)).values()].some(c=>c>=5)),
-    rule("three-consecutive-contains", "3 Consecutive Numbers (Contains)", EP["three-consecutive-contains"], "Contains three adjacent consecutive integers.", n => hasConsecutiveChunks(textOf(n),3,false)),
+    rule("three-consecutive-contains", "3 Consecutive Numbers (Contains)", EP["three-consecutive-contains"], "Contains three consecutive integers as adjacent chunks, in ascending or descending order.", n => hasConsecutiveSequence(textOf(n),3,"contains")),
     rule("contiguous-three-pair", "Contiguous Three Pair", EP["contiguous-three-pair"], "Three adjacent contiguous pairs (ddeeff).", n => /^(\d)\1(\d)\2(\d)\3$/.test(textOf(n))),
     rule("framed-pair", "Framed Pair", EP["framed-pair"], "Four digits: middle two match, both ends differ.", n => {const d=digitsOf(n);return d.length===4&&d[1]===d[2]&&d[0]!==d[1]&&d[3]!==d[1];}),
     rule("framed-triple", "Framed Triple", EP["framed-triple"], "Five digits: middle three match, ends differ.", n => {const d=digitsOf(n);return d.length===5&&d[1]===d[2]&&d[2]===d[3]&&d[0]!==d[1]&&d[4]!==d[1];}),
@@ -294,6 +371,86 @@ const epicRules = [
     rule("triple-nine", "Triple Nine", EP["triple-nine"], "Ends in 999.", n => /999$/.test(textOf(n))),
     rule("semi-millennium", "Semi-Millennium", EP["semi-millennium"], "Ends in 500.", n => /500$/.test(textOf(n))),
     rule("colossal", "Colossal", EP.colossal, "Above 999,000.", n => n>999000)
+];
+
+const anomalyRules = [
+    rule("four-consecutive-scrambled", "4 Consecutive Numbers (Scrambled)", EP["four-consecutive-scrambled"], "Contains four consecutive integers as adjacent chunks, in any order.", n => hasConsecutiveSequence(textOf(n),4,"scrambled")),
+    rule("four-consecutive-contains", "4 Consecutive Numbers (Contains)", EP["four-consecutive-contains"], "Contains four consecutive integers as adjacent chunks, in ascending or descending order, within a larger number.", n => hasConsecutiveSequence(textOf(n),4,"contains")),
+    rule("four-consecutive-numbers", "4 Consecutive Numbers", EP["four-consecutive-exact"], "The entire number splits into exactly four consecutive integers.", n => hasConsecutiveSequence(textOf(n),4,"exact"))
+];
+
+const valuesRule = (id,name,ep,explanation,values) => rule(id,name,ep,explanation,n=>values.has(n));
+const powerValues = (exponent) => {
+    const values=new Set();
+    for(let base=0;base**exponent<=1_000_000;base++)values.add(base**exponent);
+    return values;
+};
+const basePowers = (base) => {
+    const values=new Set();
+    for(let value=1;value<=1_000_000;value*=base)values.add(value);
+    return values;
+};
+const factorialValues = (()=>{const values=new Set([1]);let value=1;for(let n=1;n<=9;n++){value*=n;if(value<=1_000_000)values.add(value);}return values;})();
+const fibonacciValues = (()=>{const values=new Set([0,1]);let a=0,b=1;while(a+b<=1_000_000){[a,b]=[b,a+b];values.add(b);}return values;})();
+const ouroborosValues = new Set(Array.from({length:7},(_,i)=>i+1).map(n=>n**n));
+const exactNamedValues = [
+    ["zero","Zero",0],["one","One",1],["two","Two",2],["three","Three",3],["four","Four",4],
+    ["five","Five",5],["six","Six",6],["seven","Seven",7],["eight","Eight",8],["nine","Nine",9],
+    ["meaning","Exact Meaning",42],["six-seven","Exact Six-Seven",67],["nice","Exact Nice",69],["eighty-six","Exact Eighty-Six",86],
+    ["orientation","Exact Orientation",101],["calendar","Exact Calendar",365],["not-found","Not Found",404],["botanist","Exact Botanist",420],
+    ["devil","Exact Devil",666],["jackpot","Exact Jackpot",777],["emergency","Exact Emergency",911],["leet","Exact Leet",1337],
+    ["orwellian","Orwellian",1984],["hell","Exact Hell",7734],["17776","17776",17776],["80085","Exact 80085",80085],
+    ["full-day","Full Day",86400],["groundhog-day","Groundhog Day",365365],["hotbox","Hotbox",420420],
+    ["universal-answer","Universal Answer",424242],["infernal","Infernal",666666],["brainrot","Brainrot",676767],
+    ["very-very-nice","Very Very Nice",696969],["jackpot-six","Jackpot Six",777777],["million","The Fabled One Million",1000000]
+];
+const mythicRules = [
+    ...exactNamedValues.map(([id,name,value])=>valuesRule(`exact-${id}`,name,EP["exact-number"],`Exactly ${value}.`,new Set([value]))),
+    rule("exact-boob","Exact Boob",EP["exact-boob"],"Exactly 8008 or 58008.",n=>n===8008||n===58008),
+    rule("funny-number","Funny Number",EP["funny-number"],"Exactly 42069 or 69420.",n=>n===42069||n===69420),
+    rule("always","Always",EP.always,"Exactly 247365 or 365247.",n=>n===247365||n===365247),
+    valuesRule("golden-ratio","Golden Ratio",EP["golden-ratio"],"Exactly one of the first four or more digits of the golden ratio: 1618, 16180, or 161803.",new Set([1618,16180,161803])),
+    valuesRule("tau","Tau",EP.tau,"Exactly one of the first four or more digits of tau: 6283, 62831, or 628318.",new Set([6283,62831,628318])),
+    valuesRule("pi","Pi",EP.pi,"Exactly one of the first three or more digits of pi: 314, 3141, 31415, or 314159.",new Set([314,3141,31415,314159])),
+    valuesRule("eulers-number","Euler's Number",EP["eulers-number"],"Exactly one of the first three or more digits of e: 271, 2718, 27182, or 271828.",new Set([271,2718,27182,271828])),
+    ...[13,17,19,10,11,9,8,7].map(exp=>valuesRule(`${exp}th-power`,`${exp}th Power`,EP[`${exp}th-power`],`A perfect ${exp}th power.`,powerValues(exp))),
+    valuesRule("power-of-seven","Power of Seven",EP["power-of-seven"],"An exact power of seven.",basePowers(7)),
+    valuesRule("power-of-five","Power of Five",EP["power-of-five"],"An exact power of five.",basePowers(5)),
+    valuesRule("factorial","Factorial",EP.factorial,"A factorial number, n!.",factorialValues),
+    rule("hello","Hello",EP.hello,"Contains the sequence 07734.",n=>textOf(n).includes("07734")),
+    rule("sequence-six","Sequence (6)",EP["sequence-six"],"The entire number is six consecutive digits, ascending or descending.",n=>{const s=textOf(n);return s.length===6&&([...s].slice(1).every((d,i)=>Number(d)===Number(s[i])+1)||[...s].slice(1).every((d,i)=>Number(d)===Number(s[i])-1));}),
+    rule("contiguous-sixes","Contiguous Sixes",EP["contiguous-sixes"],"Contains six identical digits; six zeroes do not count.",n=>/(?!0)(\d)\1{5}/.test(textOf(n))),
+    rule("deep-void-5","Deep Void (5)",EP["deep-void-5"],"Contains 00000.",n=>hasSubstring(n,"00000")),
+    rule("eon","Eon",EP.eon,"Ends in 00000.",n=>/00000$/.test(textOf(n))),
+    rule("semi-eon","Semi-Eon",EP["semi-eon"],"Ends in 50000.",n=>/50000$/.test(textOf(n))),
+    rule("quint-nine","Quint Nine",EP["quint-nine"],"Ends in 99999.",n=>/99999$/.test(textOf(n))),
+    rule("single-digit","Single Digit",EP["single-digit"],"The roll contains exactly one digit.",n=>textOf(n).length===1),
+    valuesRule("ouroboros","Ouroboros",EP.ouroboros,"A number of the form n^n, for n from 1 through 7.",ouroborosValues)
+];
+const anomalyExtraRules = [
+    valuesRule("6th-power","6th Power",EP["6th-power"],"A perfect sixth power.",powerValues(6)),
+    valuesRule("power-of-three","Power of Three",EP["power-of-three"],"An exact power of three.",basePowers(3)),
+    valuesRule("power-of-two","Power of Two",EP["power-of-two"],"An exact power of two.",basePowers(2)),
+    valuesRule("5th-power","5th Power",EP["5th-power"],"A perfect fifth power.",powerValues(5)),
+    valuesRule("4th-power","4th Power",EP["4th-power"],"A perfect fourth power.",powerValues(4)),
+    rule("jackpot-five","Jackpot Five",EP["jackpot-five"],"Contains 77777.",n=>hasSubstring(n,"77777")),
+    rule("e-slice-5","E Slice (5)",EP["e-slice-5"],"Contains 27182.",n=>hasSubstring(n,"27182")),
+    rule("pi-slice-5","Pi Slice (5)",EP["pi-slice-5"],"Contains 31415.",n=>hasSubstring(n,"31415")),
+    rule("tau-slice-5","Tau Slice (5)",EP["tau-slice-5"],"Contains 62831.",n=>hasSubstring(n,"62831")),
+    rule("royal-flush","Royal Flush",EP["royal-flush"],"Contains 56789.",n=>hasSubstring(n,"56789")),
+    rule("58008","58008",EP["58008"],"Contains 58008.",n=>hasSubstring(n,"58008")),
+    valuesRule("fibonacci","Fibonacci Number",EP.fibonacci,"A Fibonacci number from the sequence beginning 0, 1, 1, 2, 3, 5...",fibonacciValues),
+    rule("cascade","Cascade",EP.cascade,"Every digit increases by one from the previous digit.",n=>{const s=textOf(n);return s.length>=2&&[...s].slice(1).every((d,i)=>Number(d)===Number(s[i])+1);}),
+    rule("waterfall","Waterfall",EP.waterfall,"Every digit decreases by one from the previous digit.",n=>{const s=textOf(n);return s.length>=2&&[...s].slice(1).every((d,i)=>Number(d)===Number(s[i])-1);}),
+    rule("homogeneous","Homogeneous",EP.homogeneous,"All digits are identical and the roll has at least two digits; zero-only strings do not count.",n=>n!==0&&textOf(n).length>=2&&/^([1-9])\1*$/.test(textOf(n))),
+    rule("funny-numbers","Funny Numbers",EP["funny-numbers"],"Contains both 69 and 420.",n=>hasSubstring(n,"69")&&hasSubstring(n,"420")),
+    rule("binary-soul","Binary Soul",EP["binary-soul"],"Contains only zeroes and ones.",n=>/^[01]+$/.test(textOf(n))),
+    valuesRule("two-digits","Two Digits",EP["two-digits"],"The roll contains exactly two digits.",new Set(Array.from({length:90},(_,i)=>i+10))),
+    rule("spy-number","Spy Number",EP["spy-number"],"The sum of the digits equals their product.",n=>{const d=digitsOf(n),sum=d.reduce((a,b)=>a+b,0),product=d.reduce((a,b)=>a*b,1);return sum===product;}),
+    rule("epoch","Epoch",EP.epoch,"Ends in 0000.",n=>/0000$/.test(textOf(n))),
+    rule("semi-epoch","Semi-Epoch",EP["semi-epoch"],"Ends in 5000.",n=>/5000$/.test(textOf(n))),
+    rule("quad-nine","Quad Nine",EP["quad-nine"],"Ends in 9999.",n=>/9999$/.test(textOf(n))),
+    rule("straight-flush","Straight Flush",EP["straight-flush"],"Contains an ascending or descending run of five consecutive digits of the same parity.",n=>["02468","13579","86420","97531"].some(v=>textOf(n).includes(v)))
 ];
 
 export const RULES = [
@@ -311,5 +468,8 @@ export const RULES = [
     dozenRule, canyonRule, fiveDigitsRule, elevenRule, harshadRule, cleanRule, semiCleanRule, equilibriumRule, sandwichRule,
     palindromeRule, perfectSquareRule,
     ...rareRules,
-    ...epicRules
+    ...epicRules,
+    ...anomalyRules,
+    ...mythicRules,
+    ...anomalyExtraRules
 ];

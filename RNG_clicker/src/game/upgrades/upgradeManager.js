@@ -50,3 +50,21 @@ export function purchaseUpgrade(game, upgradeId) {
 
     return { success: true, message: `${status.name} purchased!` };
 }
+
+export function getAnimationSpeedMultiplier(game) {
+    const level = game.upgrades.animationSpeed ?? 0;
+    return 0.9 ** level;
+}
+
+export function getRevealDelayMs(game) {
+    return Math.max(10, Math.round(100 * getAnimationSpeedMultiplier(game)));
+}
+
+export function getPostRollDelayMs(game) {
+    return Math.max(100, Math.round(1000 * getAnimationSpeedMultiplier(game)));
+}
+
+export function getEPMultiplier(game) {
+    const level = game.upgrades.epMultiplier ?? 0;
+    return 1.1 ** level;
+}

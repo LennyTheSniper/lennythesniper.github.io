@@ -4,7 +4,12 @@ import { evaluateNumber } from "./game/evaluation/evaluateNumber.js";
 import { getRollCount } from "./state/gameState.js";
 import { createDefaultGameState } from "./state/gameState.js";
 import { loadGame, saveGame } from "./storage/saveManager.js";
-import { purchaseUpgrade } from "./game/upgrades/upgradeManager.js";
+import {
+    getEPMultiplier,
+    getPostRollDelayMs,
+    getRevealDelayMs,
+    purchaseUpgrade
+} from "./game/upgrades/upgradeManager.js";
 import { renderGame } from "./ui/render.js";
 
 const { game, warning } = loadGame();
@@ -42,7 +47,7 @@ function render(isCurrentlyRolling = false, displayedNumbers = null) {
 }
 
 // Reveal every number in the batch together.
-async function revealBatch(batch) {
+async function revealBatch(batch, revealDelayMs) {
     const formattedNumbers = batch.map((result) =>
         result.number.toLocaleString()
     );
@@ -70,7 +75,7 @@ async function revealBatch(batch) {
 
         render(true, [...revealed]);
 
-        await delay(100);
+        await delay(revealDelayMs);
     }
 }
 
@@ -90,17 +95,19 @@ async function handleRoll() {
             { length: rollsToMake },
             () => {
                 const number = rollNumber(game.maxNumber);
+                const result = evaluateNumber(number);
 
                 return {
                     number,
-                    ...evaluateNumber(number)
+                    ...result,
+                    ep: Math.round(result.ep * getEPMultiplier(game))
                 };
             }
         );
 
         // Reveal all numbers together.
         message = `Revealing ${batch.length} number(s)...`;
-        await revealBatch(batch);
+        await revealBatch(batch, getRevealDelayMs(game));
 
         // Award everything after the complete batch is revealed.
         const batchEP = batch.reduce(
@@ -141,7 +148,7 @@ async function handleRoll() {
         // Show the complete batch and its reward.
         render(true, lastDisplayedBatch);
 
-        await delay(1000);
+        await delay(getPostRollDelayMs(game));
 
     } catch (error) {
         console.error("The roll failed:", error);
