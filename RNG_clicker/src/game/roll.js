@@ -1,15 +1,13 @@
-// Return a uniformly distributed integer from 0 through maxNumber, inclusive.
-// GitHub Pages uses HTTPS, so the Web Crypto API is available in normal browsers.
-export function rollNumber(maxNumber) {
-    if (!Number.isSafeInteger(maxNumber) || maxNumber < 1) {
-        throw new RangeError("maxNumber must be a positive safe integer.");
-    }
+import { ROLL_UPPER_BOUND } from "../config.js";
 
+// Return a uniformly distributed integer from 0 through the fixed roll bound.
+// GitHub Pages uses HTTPS, so the Web Crypto API is available in normal browsers.
+export function rollNumber() {
     if (!globalThis.crypto?.getRandomValues) {
         throw new Error("This browser does not support secure random number generation.");
     }
 
-    const rangeSize = maxNumber + 1;
+    const rangeSize = ROLL_UPPER_BOUND + 1;
     const uint32Range = 2 ** 32;
 
     // Rejection sampling avoids the small modulo bias caused by `% rangeSize` alone.

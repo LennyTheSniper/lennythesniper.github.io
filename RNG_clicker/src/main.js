@@ -1,11 +1,15 @@
 //src/main.js
 import { rollNumber } from "./game/roll.js";
 import { evaluateNumber } from "./game/evaluation/evaluateNumber.js";
+import { getRarityTier } from "./game/evaluation/rarity.js";
 import { getRollCount } from "./state/gameState.js";
 import { createDefaultGameState } from "./state/gameState.js";
 import { loadGame, saveGame } from "./storage/saveManager.js";
 import {
     getEPMultiplier,
+    getAnimationSpeedMultiplier,
+    getLuckCandidateCount,
+    getLuckMultiplier,
     getPostRollDelayMs,
     getRevealDelayMs,
     purchaseUpgrade
@@ -34,7 +38,14 @@ function persistGame() {
 function render(isCurrentlyRolling = false, displayedNumbers = null) {
     const numbersToDisplay = displayedNumbers !== null
         ? displayedNumbers
-        : lastDisplayedBatch;
+        : lastDisplayedBatch.length > 0
+            ? lastDisplayedBatch
+            : game.lastNumber === null
+                ? []
+                : [{
+                    number: game.lastNumber,
+                    rarity: evaluateNumber(game.lastNumber).rarity
+                }];
 
     renderGame(
         game,
@@ -73,14 +84,22 @@ async function revealBatch(batch, revealDelayMs) {
             }
         }
 
-        render(true, [...revealed]);
+        render(true, batch.map((result, index) => ({
+            number: result.number,
+            text: revealed[index],
+            rarity: result.rarity
+        })));
 
         await delay(revealDelayMs);
     }
 }
 
 async function handleRoll() {
-    if (game.gameWon || isRolling) return;
+    if (game.gameWon) {
+        await handleShareResults();
+        return;
+    }
+    if (isRolling) return;
 
     isRolling = true;
     message = "Generating your batch...";
@@ -91,23 +110,30 @@ async function handleRoll() {
 
         // IMPORTANT: Generate the entire batch immediately.
         // No animation or waiting happens until every number exists.
-        const batch = Array.from(
-            { length: rollsToMake },
-            () => {
-                const number = rollNumber(game.maxNumber);
+        const luckCandidates = getLuckCandidateCount(game);
+        const batch = Array.from({ length: rollsToMake }, () => {
+            let bestResult = null;
+            for (let candidate = 0; candidate < luckCandidates; candidate++) {
+                const number = rollNumber();
                 const result = evaluateNumber(number);
-
-                return {
-                    number,
-                    ...result,
-                    ep: Math.round(result.ep * getEPMultiplier(game))
-                };
+                if (bestResult === null || result.ep > bestResult.ep) bestResult = result;
             }
-        );
+
+            const epMultiplier = getEPMultiplier(game);
+            const awardedEP = Math.round(bestResult.ep * epMultiplier);
+            return {
+                ...bestResult,
+                ep: awardedEP,
+                rarity: bestResult.rarity === "unique"
+                    ? "unique"
+                    : getRarityTier(awardedEP, epMultiplier)
+            };
+        });
+        const orderedBatch = [...batch].sort((a, b) => b.ep - a.ep);
 
         // Reveal all numbers together.
         message = `Revealing ${batch.length} number(s)...`;
-        await revealBatch(batch, getRevealDelayMs(game));
+        await revealBatch(orderedBatch, getRevealDelayMs(game));
 
         // Award everything after the complete batch is revealed.
         const batchEP = batch.reduce(
@@ -117,16 +143,36 @@ async function handleRoll() {
 
         game.totalRolls += batch.length;
         game.ep += batchEP;
+        game.lifetimeEP += batchEP;
         game.lastNumber = batch[batch.length - 1].number;
+        for (const result of batch) {
+            if (game.luckiestRoll === null || result.ep > game.luckiestRoll.ep) {
+                game.luckiestRoll = {
+                    number: result.number,
+                    ep: result.ep,
+                    rarity: result.rarity
+                };
+            }
+            if (result.number !== 1) {
+                const bestForNumber = game.notableRolls.find(roll => roll.number === result.number);
+                if (!bestForNumber || result.ep > bestForNumber.ep) {
+                    game.notableRolls = [
+                        ...game.notableRolls.filter(roll => roll.number !== result.number),
+                        { number: result.number, ep: result.ep, rarity: result.rarity }
+                    ].sort((a, b) => b.ep - a.ep).slice(0, 3);
+                }
+            }
+        }
 
         recentRolls = [
             ...recentRolls,
             ...batch
         ].slice(-20);
 
-        lastDisplayedBatch = batch.map((result) =>
-            result.number.toLocaleString()
-        );
+        lastDisplayedBatch = orderedBatch.map((result) => ({
+            number: result.number,
+            rarity: result.rarity
+        }));
 
         const foundOne = batch.some(
             (result) => result.number === 1
@@ -159,6 +205,53 @@ async function handleRoll() {
         isRolling = false;
         render();
     }
+}
+
+async function handleShareResults() {
+    const notableRollLines = game.notableRolls.length > 0
+        ? game.notableRolls.map(roll => `• ${roll.number.toLocaleString()} - ${roll.ep.toLocaleString()} EP`)
+        : ["No other standout rolls recorded yet."];
+    const shareText = [
+        "🎲 RNG Clicker - Victory!",
+        `🏁 Found 1 after ${game.totalRolls.toLocaleString()} rolls`,
+        `✨ Lifetime EP: ${game.lifetimeEP.toLocaleString()}`,
+        "🌟 Best rolls:",
+        ...notableRollLines,
+        `⚡ Upgrades: ${getRollCount(game)} / click · Luck x${getLuckMultiplier(game).toFixed(2)} · EP x${getEPMultiplier(game).toFixed(2)} · Roll speed x${getAnimationSpeedMultiplier(game).toFixed(2)}`,
+        "Play: https://lennythesniper.github.io/RNG_clicker/"
+    ].join("\n");
+
+    try {
+        let copied = false;
+        if (navigator.clipboard?.writeText) {
+            try {
+                await navigator.clipboard.writeText(shareText);
+                copied = true;
+            } catch {
+                // Fall back to the selection-based copy path below.
+            }
+        }
+        if (!copied) {
+            const textArea = document.createElement("textarea");
+            textArea.value = shareText;
+            textArea.setAttribute("readonly", "");
+            textArea.style.position = "fixed";
+            textArea.style.opacity = "0";
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                copied = document.execCommand("copy");
+            } finally {
+                textArea.remove();
+            }
+            if (!copied) throw new Error("Clipboard copy was rejected.");
+        }
+        message = "Victory summary copied to your clipboard!";
+    } catch (error) {
+        console.error("Could not copy the victory summary:", error);
+        message = "Could not copy the share text. Check clipboard permissions and try again.";
+    }
+    render();
 }
 
 function handleBuyUpgrade(upgradeId) {

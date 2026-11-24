@@ -7,10 +7,10 @@ It is designed to be hosted as a static website on GitHub Pages.
 
 - Manual rolls only. Nothing produces currency while the player is away.
 - A local save using `localStorage`.
-- A modular number-evaluation system, with one file per example rule.
-- Example rules: even, odd, prime, palindrome, and perfect square.
-- Example upgrades: Multi-roll and Number compression.
-- A basic UI that displays EP, total rolls, the current range, recent results, and upgrades.
+- A modular number-evaluation system with a central rule registry.
+- RNGdle-inspired number traits with rarity-colored roll results.
+- Upgrades for Multi-roll, Luck, faster reveals, and EP multipliers.
+- A basic UI that displays EP, total rolls, recent results, and upgrades.
 - A save version field so the save format can be migrated later.
 
 The example EP values and upgrade prices are placeholders. They are intended to prove the structure, not to represent final game balance or RNGdle's scoring rules.
@@ -99,9 +99,9 @@ Every rule is checked independently. A number can match several rules and earn t
 
 ## Important design notes
 
-- The starting roll range is inclusive: **0 through 1,000,000**. That means there are 1,000,001 possible results.
+- Rolls cover the full supported RNGdle number space.
 - The target is exactly `1`. A roll of `0` is possible but is not a win.
-- The range-reduction upgrade has a 40-level cap and a hard lower bound of `2`, so it cannot make victory automatic. The player must still roll a `1` themselves.
+- Luck samples multiple candidate numbers and keeps the one with the highest EP.
 - Multi-roll stops the current batch immediately if a `1` appears.
 - `Math.random()` is not used. `roll.js` uses the browser's Web Crypto API with rejection sampling to avoid modulo bias.
 - Local saves belong to the browser and website origin on that device. They do not follow a player to another browser or computer automatically.

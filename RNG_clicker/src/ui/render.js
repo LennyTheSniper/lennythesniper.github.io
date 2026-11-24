@@ -20,17 +20,28 @@ export function renderGame(
     document.getElementById("rolls-value").textContent =
         formatNumber(game.totalRolls);
 
-    document.getElementById("max-value").textContent =
-        formatNumber(game.maxNumber);
-
     document.getElementById("batch-value").textContent =
         formatNumber(getRollCount(game));
 
+    const luckiestNumber = document.getElementById("luckiest-number");
+    const luckiestEP = document.getElementById("luckiest-ep");
+    if (game.luckiestRoll) {
+        luckiestNumber.textContent = formatNumber(game.luckiestRoll.number);
+        luckiestNumber.className = `stat-highlight rarity-${game.luckiestRoll.rarity}`;
+        luckiestEP.textContent = `${formatNumber(game.luckiestRoll.ep)} EP earned`;
+    } else {
+        luckiestNumber.textContent = "—";
+        luckiestNumber.className = "stat-highlight";
+        luckiestEP.textContent = game.totalRolls > 0
+            ? "Tracking starts now"
+            : "No rolls yet";
+    }
+
     const rollButton = document.getElementById("roll-button");
 
-    rollButton.disabled = game.gameWon || isRolling;
+    rollButton.disabled = isRolling;
     rollButton.textContent = game.gameWon
-        ? "FOUND 1 — GAME COMPLETE"
+        ? "COPY SHARE TEXT"
         : getRollCount(game) === 1
             ? "ROLL"
             : `ROLL ${formatNumber(getRollCount(game))} NUMBERS`;
@@ -48,9 +59,15 @@ export function renderGame(
     if (numbersToShow.length === 0) {
         numberDisplay.textContent = "?";
     } else {
-        for (const number of numbersToShow) {
+        for (const entry of numbersToShow) {
+            const isEntry = entry !== null && typeof entry === "object";
+            const rarity = isEntry ? entry.rarity : null;
+            const number = isEntry
+                ? (entry.text ?? formatNumber(entry.number))
+                : entry;
             const chip = document.createElement("span");
-            chip.className = "number-chip";
+            chip.className = `number-chip${rarity ? ` rarity-${rarity}` : ""}`;
+            if (rarity) chip.title = `${rarity} rarity`;
             chip.textContent = number === "" ? " " : number;
             numberDisplay.appendChild(chip);
         }
@@ -77,7 +94,8 @@ export function renderGame(
             item.className = "recent-roll-item";
 
             const number = document.createElement("span");
-            number.className = "recent-roll-number";
+            number.className = `recent-roll-number${result.rarity ? ` rarity-${result.rarity}` : ""}`;
+            if (result.rarity) number.title = `${result.rarity} rarity`;
             number.textContent = formatNumber(result.number);
 
             const detail = document.createElement("span");

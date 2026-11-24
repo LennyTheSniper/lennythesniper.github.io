@@ -1,4 +1,3 @@
-import { MINIMUM_MAX_NUMBER } from "../../config.js";
 import { UPGRADE_DEFINITIONS } from "./definitions.js";
 
 export function getUpgradeStatus(game, upgradeId) {
@@ -14,12 +13,17 @@ export function getUpgradeStatus(game, upgradeId) {
     );
 
     const reachedLevelLimit = level >= definition.maxLevel;
-    const rangeAlreadyAtMinimum =
-        upgradeId === "rangeReduction" && game.maxNumber <= MINIMUM_MAX_NUMBER;
-    const disabled = reachedLevelLimit || rangeAlreadyAtMinimum || game.gameWon;
+    const disabled = reachedLevelLimit || game.gameWon;
 
     return {
         ...definition,
+        description: upgradeId === "luck"
+            ? `Current luck: ×${getLuckMultiplier(game).toFixed(2)}. Each purchase adds 10% luck; roll multiple candidates and keep the highest-EP result.`
+            : upgradeId === "epMultiplier"
+                ? `Current EP multiplier: ×${getEPMultiplier(game).toFixed(2)}. Each purchase increases EP rewards by 10%.`
+                : upgradeId === "animationSpeed"
+                    ? `Current reroll timing: ×${getAnimationSpeedMultiplier(game).toFixed(2)}. Each purchase reduces roll cooldown by 10%.`
+                    : definition.description,
         level,
         cost,
         disabled,
@@ -41,13 +45,6 @@ export function purchaseUpgrade(game, upgradeId) {
     game.ep -= status.cost;
     game.upgrades[upgradeId] += 1;
 
-    if (upgradeId === "rangeReduction") {
-        game.maxNumber = Math.max(
-            MINIMUM_MAX_NUMBER,
-            Math.floor(game.maxNumber * 0.9)
-        );
-    }
-
     return { success: true, message: `${status.name} purchased!` };
 }
 
@@ -67,4 +64,13 @@ export function getPostRollDelayMs(game) {
 export function getEPMultiplier(game) {
     const level = game.upgrades.epMultiplier ?? 0;
     return 1.1 ** level;
+}
+
+export function getLuckMultiplier(game) {
+    const level = game.upgrades.luck ?? 0;
+    return 1.1 ** level;
+}
+
+export function getLuckCandidateCount(game) {
+    return Math.ceil(getLuckMultiplier(game));
 }

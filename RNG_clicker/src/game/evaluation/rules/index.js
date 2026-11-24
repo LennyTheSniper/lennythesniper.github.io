@@ -98,6 +98,14 @@ const hasScrambleWithin = (s,minChunks,maxChunks,allowGaps) => {
     };
     return search(0,[]);
 };
+const hasMiniScramble = s => {
+    for(let start=0;start<s.length;start++)for(let length=3;length<=5&&start+length<=s.length;length++){
+        const region=s.slice(start,start+length);
+        for(let count=3;count<=Math.min(5,region.length);count++)
+            if(getPartitions(region,count).some(chunks=>chunksFormRun(chunks)))return true;
+    }
+    return false;
+};
 const hasConsecutiveSequence = (s,count,mode) => {
     if(mode==="exact")return getPartitions(s,count).some(chunks=>consecutiveValues(chunks));
     for(let start=0;start<s.length;start++)for(let end=start+count;end<=s.length;end++){
@@ -108,15 +116,13 @@ const hasConsecutiveSequence = (s,count,mode) => {
     return false;
 };
 const hasGeometricChunkSequence = s => {
-    for(let start=0;start<s.length;start++)for(let end=start+3;end<=s.length;end++){
-        const segment=s.slice(start,end);
-        for(let count=3;count<=segment.length;count++)for(const chunks of getPartitions(segment,count)){
-            if(!chunks.every(validIntegerChunk))continue;
-            const values=chunks.map(Number);
-            if(values.some(v=>v<=0))continue;
-            if(values[1]<=values[0])continue;
-            if(values.slice(2).every((v,i)=>v*values[0]===values[i+1]*values[i+1]))return true;
-        }
+    // RNGdle's Crescendo is the whole roll split into 3+ terms, each 1-3
+    // digits long. It is not a substring search (e.g. 119000 is not one).
+    for(let count=3;count<=s.length;count++)for(const chunks of getPartitions(s,count)){
+        if(chunks.some(chunk=>chunk.length>3||!validIntegerChunk(chunk)))continue;
+        const values=chunks.map(Number);
+        if(values.some(value=>value<=0)||values[0]===values[1])continue;
+        if(values.slice(2).every((value,index)=>value*values[index]===values[index+1]*values[index+1]))return true;
     }
     return false;
 };
@@ -172,7 +178,7 @@ const EP = {
     "deeper-meaning":334448, "6767":334448, leet:333334, hell:333334, "8008":333334,
     "big-brother":333334, "pi-slice-4":333334, "e-slice-4":333334, "tau-slice-4":333334,
     "three-consecutive-scrambled":277778, zipper:246914, ascension:219298,
-    crescendo:5099, "five-of-a-kind":198020, "three-consecutive-contains":157978,
+    crescendo:208334, "five-of-a-kind":198020, "three-consecutive-contains":157978,
     "contiguous-three-pair":154321, "framed-pair":137174, "framed-triple":137174,
     "framed-quad":137174, decay:119474, "three-digits":111111, echo:100100,
     millennium:100000, pronic:100000, "triple-nine":100000, "semi-millennium":100000,
@@ -238,7 +244,7 @@ export const hillsRule = rule("hills", "Hills", EP["hills"], "Digits strictly al
 export const threeKindRule = rule("three-of-a-kind", "Three of a Kind", EP["three-of-a-kind"], "Exactly three of one digit.", n => hasCount(n, [...countsOf(digitsOf(n))].find(([, c]) => c === 3)?.[0], 3));
 export const luckySevenDivisibleRule = rule("lucky-seven-divisible", "Lucky Seven (Divisible)", EP["lucky-seven-divisible"], "Divisible by 7.", n => n % 7 === 0);
 export const heterogeneousRule = rule("heterogeneous", "Heterogeneous", EP["heterogeneous"], "No repeated digits.", n => countsOf(digitsOf(n)).size === digitsOf(n).length);
-export const miniScrambleRule = rule("mini-scramble", "Mini Scramble", EP["mini-scramble"], "Contains 3 to 5 non-overlapping number chunks which form a consecutive run when sorted.", n => hasScrambleWithin(textOf(n),3,5,true));
+export const miniScrambleRule = rule("mini-scramble", "Mini Scramble", EP["mini-scramble"], "Contains a contiguous 3–5 digit region that can be split into consecutive integers when sorted.", n => hasMiniScramble(textOf(n)));
 export const gapOneRule = rule("gap-one", "Gap One", EP["gap-one"], "First and last digits differ by exactly 1.", n => Math.abs(digitsOf(n)[0]-digitsOf(n).at(-1))===1);
 export const twoPairRule = rule("two-pair", "Two Pair", EP["two-pair"], "Two digits each appear at least twice.", n => [...countsOf(digitsOf(n)).values()].filter(c=>c>=2).length>=2);
 export const dunesRule = rule("dunes", "Dunes", EP["dunes"], "Ignoring flats, non-flat slopes alternate direction.", n => { const s=slopes(digitsOf(n)).filter(Boolean); return s.length>=1 && s.every((v,i)=>i===0||v!==s[i-1]); });
@@ -356,7 +362,7 @@ const epicRules = [
     rule("three-consecutive-scrambled", "3 Consecutive Numbers (Scrambled)", EP["three-consecutive-scrambled"], "Contains three consecutive integers as adjacent chunks, in any order.", n => hasConsecutiveSequence(textOf(n),3,"scrambled")),
     rule("zipper", "Zipper", EP.zipper, "Two digits alternating perfectly.", n => {const d=digitsOf(n);return d.length>=4&&d[0]===d[2]&&d[1]===d[3]&&d[0]!==d[1]&&d.every((v,i)=>i<2||v===d[i%2]);}),
     rule("ascension", "Ascension", EP.ascension, "Every digit strictly larger than the previous.", n => digitsOf(n).every((d,i,a)=>i===0||d>a[i-1])),
-    rule("crescendo", "Crescendo", EP.crescendo, "Contains at least three consecutive integer chunks forming an increasing geometric sequence.", n => hasGeometricChunkSequence(textOf(n))),
+    rule("crescendo", "Crescendo", EP.crescendo, "The full roll splits into at least three positive 1–3 digit chunks with a constant ratio.", n => hasGeometricChunkSequence(textOf(n))),
     rule("five-of-a-kind", "Five of a Kind", EP["five-of-a-kind"], "Five identical digits anywhere.", n => [...countsOf(digitsOf(n)).values()].some(c=>c>=5)),
     rule("three-consecutive-contains", "3 Consecutive Numbers (Contains)", EP["three-consecutive-contains"], "Contains three consecutive integers as adjacent chunks, in ascending or descending order.", n => hasConsecutiveSequence(textOf(n),3,"contains")),
     rule("contiguous-three-pair", "Contiguous Three Pair", EP["contiguous-three-pair"], "Three adjacent contiguous pairs (ddeeff).", n => /^(\d)\1(\d)\2(\d)\3$/.test(textOf(n))),
@@ -398,7 +404,7 @@ const exactNamedValues = [
     ["five","Five",5],["six","Six",6],["seven","Seven",7],["eight","Eight",8],["nine","Nine",9],
     ["meaning","Exact Meaning",42],["six-seven","Exact Six-Seven",67],["nice","Exact Nice",69],["eighty-six","Exact Eighty-Six",86],
     ["orientation","Exact Orientation",101],["calendar","Exact Calendar",365],["not-found","Not Found",404],["botanist","Exact Botanist",420],
-    ["devil","Exact Devil",666],["jackpot","Exact Jackpot",777],["emergency","Exact Emergency",911],["leet","Exact Leet",1337],
+    ["devil","Exact Devil",666],["jackpot","Exact Jackpot",777],["emergency","Exact Emergency",911],["mayday","Mayday",911911],["leet","Exact Leet",1337],
     ["orwellian","Orwellian",1984],["hell","Exact Hell",7734],["17776","17776",17776],["80085","Exact 80085",80085],
     ["full-day","Full Day",86400],["groundhog-day","Groundhog Day",365365],["hotbox","Hotbox",420420],
     ["universal-answer","Universal Answer",424242],["infernal","Infernal",666666],["brainrot","Brainrot",676767],

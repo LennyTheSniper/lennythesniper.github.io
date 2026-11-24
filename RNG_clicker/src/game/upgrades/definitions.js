@@ -5,31 +5,31 @@ export const UPGRADE_DEFINITIONS = {
         name: "Multi-roll",
         description: "Roll one additional number each time you press the main button.",
         baseCost: 50_000,
-        costMultiplier: 4,
+        costMultiplier: 2.1,
         maxLevel: 19
     },
-    rangeReduction: {
-        id: "rangeReduction",
-        name: "Number compression",
-        description: "Reduce the maximum possible roll by 10% per purchase, up to 40 levels.",
+    luck: {
+        id: "luck",
+        name: "Luck",
+        description: "Current luck: ×1.00. Each purchase adds 10% luck; roll multiple candidates and keep the highest-EP result.",
         baseCost: 100_000,
-        costMultiplier: 1.65,
-        maxLevel: 40
+        costMultiplier: 1.55,
+        maxLevel: 30
     },
     animationSpeed: {
         id: "animationSpeed",
-        name: "Faster reveals",
-        description: "Reduce digit reveal timing and the pause before your next roll by 10% per level (×0.9), up to 20 levels.",
+        name: "Faster rerolls",
+        description: "Reduce reroll timing of your next roll by 10% per level.",
         baseCost: 75_000,
-        costMultiplier: 1.8,
-        maxLevel: 20
+        costMultiplier: 1.85,
+        maxLevel: 25
     },
     epMultiplier: {
         id: "epMultiplier",
         name: "EP multiplier",
-        description: "Multiply EP earned per roll by ×1.1 per level, up to 20 levels.",
-        baseCost: 100_000,
-        costMultiplier: 2.1,
-        maxLevel: 20
+        description: "Multiply EP earned per roll by +10% per level.",
+        baseCost: 150_000,
+        costMultiplier: 1.8,
+        maxLevel: 25
     }
 };

@@ -31,12 +31,13 @@
                     <strong id="rolls-value">0</strong>
                 </article>
                 <article class="stat-card">
-                    <span class="stat-label">Maximum number</span>
-                    <strong id="max-value">1,000,000</strong>
-                </article>
-                <article class="stat-card">
                     <span class="stat-label">Numbers per click</span>
                     <strong id="batch-value">1</strong>
+                </article>
+                <article class="stat-card">
+                    <span class="stat-label">Luckiest roll</span>
+                    <strong id="luckiest-number">—</strong>
+                    <span id="luckiest-ep" class="stat-subvalue">No rolls yet</span>
                 </article>
             </section>
 
@@ -51,26 +52,29 @@
             </section>
 
             <!-- RIGHT COLUMN: Rolling and history -->
-            <section class="panel roll-panel" aria-labelledby="roll-heading">
-                <div>
-                    <p class="eyebrow">Your next attempt</p>
-                    <h2 id="roll-heading">Ready to roll?</h2>
-                </div>
+            <div class="roll-column">
+                <section class="panel roll-panel" aria-labelledby="roll-heading">
+                    <div>
+                        <p class="eyebrow">Your next attempt</p>
+                        <h2 id="roll-heading">Ready to roll?</h2>
+                    </div>
 
-                <div id="last-number" class="number-display" aria-live="polite">?</div>
+                    <div id="last-number" class="number-display" aria-live="polite">?</div>
 
-                <p id="roll-summary" class="roll-summary">
-                    Your first number is waiting.
+                    <p id="roll-summary" class="roll-summary">
+                        Your first number is waiting.
+                    </p>
+
+                    <button id="roll-button" class="primary-button" type="button">
+                        ROLL
+                    </button>
+
+                </section>
+
+                <p id="game-message" class="game-message" role="status" aria-live="polite">
+                    Your progress is saved in this browser.
                 </p>
-
-                <button id="roll-button" class="primary-button" type="button">
-                    ROLL
-                </button>
-
-                <p class="fine-print">
-                    Numbers are generated from 0 to your current maximum, inclusive.
-                </p>
-            </section>
+            </div>
 
             <section class="panel recent-panel" aria-labelledby="recent-heading">
                 <div class="section-heading">
@@ -97,12 +101,8 @@
 
         </div>
 
-        <p id="game-message" class="game-message" role="status" aria-live="polite">
-            Your progress is saved in this browser.
-        </p>
-
         <footer class="page-footer">
-            Made by <a href="https://x.com/lennythesniper" target="_blank" rel="noopener noreferrer">LennyTheSniper</a> &mdash; <a href="https://github.com/lennythesniper/rng-clicker" target="_blank" rel="noopener noreferrer">Source Code</a>
+            Made by <a href="https://x.com/lennythesniper" target="_blank" rel="noopener noreferrer">LennyTheSniper</a> &mdash; <a href="https://github.com/LennyTheSniper/lennythesniper.github.io/tree/main/RNG_clicker" target="_blank" rel="noopener noreferrer">Source Code</a>
         </footer>
     </main>
 </body>
